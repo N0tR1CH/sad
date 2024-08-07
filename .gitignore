@@ -1,0 +1,35 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Node modules - heaviest thang in the whole universe
+node_modules
+
+# Mac os related
+.DS_Store
+
+# Env file
+.env
+
+# Executable
+sad-app
+
+# Test binary
+*.test
+
+# Coverage stuff
+*.out
+
+# Go workspace file
+go.work
+tmp/
+
+# Project build
+*templ.go
+
+# IDE specific files
+.vscode
+.idea

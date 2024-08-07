@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "removeComments": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noImplicitThis": true,
+    "allowJs": true,
+    "types": ["htmx.org/dist/htmx"]
+  },
+  "include": ["src/**/*", "types/**/*"]
+}

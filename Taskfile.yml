@@ -1,0 +1,75 @@
+version: "3"
+
+tasks:
+  build:
+    deps: [build-css, gen-templ]
+    summary: |
+      Builds share and discuss app to an executable
+
+      It gets main.go file and runs go build utility to build an executable that can be deployed.
+    dir: "./cmd/api"
+    cmds:
+      - cmd: echo "Building..."
+        silent: true
+      - go build -o ../../bin/sad-app
+
+  clean:
+    summary: |
+      Deletes sad-app executable
+    dir: "./bin"
+    cmds:
+      - cmd: echo "Deleting sad-app executable..."
+        silent: true
+      - rm sad-app
+
+  watch:
+    deps: [kill-watch]
+    summary: |
+      It runs air watcher
+
+      Air watcher rebuild app and run it when files declared in air config changes.
+    cmds:
+      - cmd: echo "Hot reloading starting..."
+        silent: true
+      - air
+
+  kill-watch:
+    summary: |
+      Process has tendency to stuck
+
+      It finds the port that app uses and closes it.
+    cmds:
+      - cmd: echo "Killing air..."
+        silent: true
+      - lsof -t -i :4000 | xargs kill -9
+
+  gen-templ:
+    summary: |
+      It generates templ go file
+
+      It runs templ utility to generate go functions based on templ files.
+    cmds:
+      - cmd: echo "Running templ generate..."
+        silent: true
+      - templ generate
+
+  build-css:
+    summary: |
+      Builds share and discuss app to an executable
+
+      It gets main.go file and runs go build utility to build an executable that can be deployed.
+    cmds:
+      - cmd: echo "Building minified css..."
+        silent: true
+      - tailwindcss -i ./scripts/input.css -o ./cmd/web/assets/css/output.css --minify
+
+  bundle-js:
+    summary: |
+      Builds bundled javascript file with esbuild
+
+      It gets src typescript files to produce bundled js sent to the client.
+    dir: "./scripts"
+    cmds:
+      - cmd: echo "Bundling JS"
+        silent: true
+      - pnpm run build
