@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/N0tR1CH/sad/internal/data"
 	"github.com/N0tR1CH/sad/views"
@@ -55,7 +54,7 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 				errs = append(errs, ve.Error())
 			}
 		}
-		return c.String(http.StatusBadRequest, strings.Join(errs, "\n"))
+		return views.Render(c, http.StatusBadRequest, components.DiscussionFormErrors(errs))
 	}
 
 	if err := app.models.Discussions.Insert(
