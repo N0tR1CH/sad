@@ -6,14 +6,14 @@ import (
 	"github.com/N0tR1CH/sad/cmd/web"
 	"github.com/N0tR1CH/sad/views"
 	"github.com/N0tR1CH/sad/views/pages"
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 )
 
 func (app *application) routes() http.Handler {
 	r := echo.New()
 
-	r.Validator = NewCustomValidator(validator.New())
+	r.Validator = NewCustomValidator(validator.New(validator.WithRequiredStructEnabled()))
 
 	app.middleware(r)
 
