@@ -11,7 +11,7 @@ node_modules
 # Mac os related
 .DS_Store
 
-# Env file
+# Env directory
 .env
 
 # Executable
@@ -33,3 +33,6 @@ tmp/
 # IDE specific files
 .vscode
 .idea
+
+# Postgres docker volume
+db_data

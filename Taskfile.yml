@@ -2,7 +2,7 @@ version: "3"
 
 tasks:
   build:
-    deps: [build-css, gen-templ]
+    deps: [build-css, gen-templ, bundle-js]
     summary: |
       Builds share and discuss app to an executable
 
@@ -53,6 +53,8 @@ tasks:
         silent: true
       - templ generate
 
+  ##############################ASSETS##########################################
+
   build-css:
     summary: |
       Builds share and discuss app to an executable
@@ -73,3 +75,56 @@ tasks:
       - cmd: echo "Bundling JS"
         silent: true
       - pnpm run build
+
+  enable-hr:
+    summary: |
+      It runs websocket server that hot reloads the application.
+    dir: "./scripts/hot_reload"
+    cmds:
+      - pnpx nodemon --ext go,css --watch ../../views --watch ../../cmd/web/assets/css/output.css hot_reload.mjs
+
+  ##############################MIGRATIONS########################################
+
+  migrate-create-*:
+    vars:
+      MIGRATION_NAME: "{{index .MATCH 0}}"
+    prompt: This action will create migration files. Do you want to continue?
+    summary: |
+      Create migration with predefined settings
+
+      It gets name and create up and down sql migration files.
+    dir: "./migrations"
+    cmds:
+      - migrate create -seq -ext=.sql {{.MIGRATION_NAME}}
+
+  migrate-up:
+    prompt: This action will apply current migration files. Do you want to continue?
+    cmds:
+      - migrate -path=./migrations -database=$(cat .env/development/database | tail -n1 | cut -d"=" -f2-3) up
+
+  migrate-down:
+    prompt: This action will execute current migration down files. Do you want to continue?
+    cmds:
+      - migrate -path=./migrations -database=$(cat .env/development/database | tail -n1 | cut -d"=" -f2-3) down
+
+  show-migration-version:
+    summary: |
+      Shows current migration version
+    cmds:
+      - migrate -path=./migrations -database=$(cat .env/development/database | tail -n1 | cut -d"=" -f2-3) version
+
+  migrate-up-to-*:
+    vars:
+      MIGRATION_VERSION: "{{index .MATCH 0}}"
+    summary: |
+      Migrate up to specific version
+    cmds:
+      - migrate -path=./migrations -database=$(cat .env/development/database | tail -n1 | cut -d"=" -f2-3) goto {{.MIGRATION_VERSION}}
+
+  migrate-down-by-*:
+    vars:
+      MIGRATIONS_COUNT: "{{ index .MATCH 0}}"
+    summary: |
+      Migrate down by specific number of migrations
+    cmds:
+      - migrate -path=./migrations -database=$(cat .env/development/database | tail -n1 | cut -d"=" -f2-3) down {{ .MIGRATIONS_COUNT }}

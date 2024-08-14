@@ -1,10 +1,8 @@
 import { WebSocketServer } from "ws";
 
-type WebSocketConfig = { port: number };
-
 const port = 8000;
-const wsc: WebSocketConfig = { port };
-const wss: WebSocketServer = new WebSocketServer(wsc);
+const wsc = { port };
+const wss = new WebSocketServer(wsc);
 
 wss.on("open", () => {
   console.log("open");

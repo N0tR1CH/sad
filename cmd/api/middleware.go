@@ -2,14 +2,22 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
+	"github.com/N0tR1CH/sad/views"
+	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 func (app *application) middleware(e *echo.Echo) {
+	e.Pre(middleware.RemoveTrailingSlashWithConfig(
+		middleware.TrailingSlashConfig{
+			RedirectCode: http.StatusMovedPermanently,
+		},
+	))
 	e.Use(
 		middleware.RequestLoggerWithConfig(
 			middleware.RequestLoggerConfig{
@@ -48,7 +56,9 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Use(
 		middleware.CORSWithConfig(
 			middleware.CORSConfig{
-				AllowOrigins: []string{"http://localhost:4000"},
+				AllowOrigins: []string{
+					fmt.Sprintf("http://localhost:%d", app.config.port),
+				},
 				AllowMethods: []string{
 					http.MethodGet,
 					http.MethodPut,
@@ -58,4 +68,8 @@ func (app *application) middleware(e *echo.Echo) {
 			},
 		),
 	)
+
+	e.RouteNotFound("/*", func(c echo.Context) error {
+		return views.Render(c, http.StatusNotFound, pages.Page404())
+	})
 }

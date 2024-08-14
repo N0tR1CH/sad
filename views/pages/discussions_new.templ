@@ -1,0 +1,12 @@
+package pages
+
+import (
+	"github.com/N0tR1CH/sad/views/components"
+	"github.com/N0tR1CH/sad/views/layouts"
+)
+
+templ NewDiscussionPage(url string) {
+	@layouts.Base() {
+		@components.DiscussionForm(url)
+	}
+}

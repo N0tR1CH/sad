@@ -1,0 +1,39 @@
+package layouts
+
+templ Head() {
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<link rel="stylesheet" href="/static/css/output.css"/>
+		<link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png"/>
+		<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png"/>
+		<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png"/>
+		<link rel="manifest" href="/static/favicon/site.webmanifest"/>
+		<title>SAD</title>
+		<script src="/static/js/out.js" defer type="module"></script>
+	</head>
+}
+
+templ Base() {
+	<!DOCTYPE html>
+	<html lang="en">
+		@Head()
+		<body hx-boost="true" class="h-screen grid grid-rows-[auto_1fr_auto]">
+			<header>
+				<div class="navbar bg-neutral text-neutral-content flex items-center justify-center">
+					<a href="/">
+						<button class="btn btn-ghost text-xl">
+							SAD
+						</button>
+					</a>
+				</div>
+			</header>
+			<main class="container mx-auto">
+				{ children... }
+			</main>
+			<footer class="footer bg-neutral font-bold text-neutral-content items-center justify-center p-4">
+				<p>Copyright © 2024 - All right reserved</p>
+			</footer>
+		</body>
+	</html>
+}

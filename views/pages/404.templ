@@ -1,0 +1,22 @@
+package pages
+
+import "github.com/N0tR1CH/sad/views/layouts"
+
+templ Page404() {
+	@layouts.Base() {
+		<div class="h-full flex flex-col">
+			<h2
+				_="on mouseenter toggle @hidden on #not-found-text until mouseleave"
+				class="text-center my-auto"
+			>
+				<a
+					href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404"
+					target="_blank"
+					class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-bold underline hover:no-underline"
+				>
+					404<span id="not-found-text">| NOT FOUND</span>
+				</a>
+			</h2>
+		</div>
+	}
+}

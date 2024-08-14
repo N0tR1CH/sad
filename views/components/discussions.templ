@@ -1,0 +1,27 @@
+package components
+
+import "fmt"
+
+templ DiscussionForm(url string) {
+	<form hx-post="/discussions" class="grid grid-cols-1 grid-rows-5 gap-y-4 mt-8">
+		<label class="input input-bordered flex items-center gap-2 row-span-1">
+			<input type="text" name="title" class="grow" placeholder="Great website to watch videos"/>
+		</label>
+		<input
+			type="text"
+			name="description"
+			class="input input-bordered flex items-center gap-2 row-span-2 h-24"
+			placeholder="I stumbled upon this great website and I wanted to show it to you all!"
+		/>
+		<label class="input input-bordered flex items-center gap-2 row-span-1">
+			<input
+				type="url"
+				name="url"
+				class="grow"
+				placeholder="https://www.youtube.com/"
+				value={ fmt.Sprintf("%s", url) }
+			/>
+		</label>
+		<button type="submit" class="btn row-span-1">Share</button>
+	</form>
+}
