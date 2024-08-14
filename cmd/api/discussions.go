@@ -70,3 +70,69 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 
 	return c.String(http.StatusOK, fmt.Sprintf("%v", input))
 }
+
+func (app *application) validateDiscussionTitleHandler(c echo.Context) error {
+	var input struct {
+		Title string `query:"title" validate:"required,max=130"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
+	}
+	if err := c.Validate(&input); err != nil {
+		msg := ""
+		for _, ve := range err.(validator.ValidationErrors) {
+			switch ve.Tag() {
+			case "required":
+				msg = "Field is required"
+			case "max":
+				msg = "Too many characters"
+			}
+		}
+		return views.Render(c, http.StatusOK, components.DiscussionFormErrorField(msg))
+	}
+	return c.String(http.StatusOK, "")
+}
+
+func (app *application) validateDiscussionDescriptionHandler(c echo.Context) error {
+	var input struct {
+		Description string `query:"description" validate:"required,max=4000"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
+	}
+	if err := c.Validate(&input); err != nil {
+		msg := ""
+		for _, ve := range err.(validator.ValidationErrors) {
+			switch ve.Tag() {
+			case "required":
+				msg = "Field is required"
+			case "max":
+				msg = "Too many characters"
+			}
+		}
+		return views.Render(c, http.StatusOK, components.DiscussionFormErrorField(msg))
+	}
+	return c.String(http.StatusOK, "")
+}
+
+func (app *application) validateDiscussionUrlHandler(c echo.Context) error {
+	var input struct {
+		Description string `query:"url" validate:"required,url"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
+	}
+	if err := c.Validate(&input); err != nil {
+		msg := ""
+		for _, ve := range err.(validator.ValidationErrors) {
+			switch ve.Tag() {
+			case "required":
+				msg = "Field is required"
+			case "url":
+				msg = "Field must be url"
+			}
+		}
+		return views.Render(c, http.StatusOK, components.DiscussionFormErrorField(msg))
+	}
+	return c.String(http.StatusOK, "")
+}

@@ -41,6 +41,11 @@ func (app *application) staticFilesHandler() http.Handler {
 
 func (app *application) discussionsRoutes(e *echo.Echo) {
 	g := e.Group("/discussions")
+	// Creating new discussion
 	g.GET("/new", app.newDiscussionHandler)
 	g.POST("", app.createDiscussionHandler)
+	// Validating discussion fields
+	g.GET("/title", app.validateDiscussionTitleHandler)
+	g.GET("/description", app.validateDiscussionDescriptionHandler)
+	g.GET("/url", app.validateDiscussionUrlHandler)
 }

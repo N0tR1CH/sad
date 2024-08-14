@@ -11,19 +11,11 @@ templ DiscussionForm(url string) {
 				type="text"
 				name="title"
 				class="grow input input-bordered flex items-center"
+				hx-get="/discussions/title"
+				hx-target="next"
+				hx-trigger="load delay:1s, change, keyup delay:200ms changed"
 			/>
-			<span
-				class="absolute right-2 top-3 bg-base-100 animate-pulse"
-				_="on mouseenter toggle @hidden on next <span/> until mouseleave"
-			>
-				@warningIcon()
-			</span>
-			<span
-				class="absolute -top-8 right-4 bg-base-300 z-10 rounded-md rounded-br-xl p-2"
-				hidden
-			>
-				Required
-			</span>
+			<div></div>
 		</div>
 		<div class="relative flex gap-2 row-span-2 flex-col h-96">
 			<label for="description" class="absolute -top-2 left-2 bg-base-100 text-xs px-2">Description</label>
@@ -38,19 +30,11 @@ templ DiscussionForm(url string) {
 					on blur
 						add .visible to #md-icon
 				"
+				hx-get="/discussions/description"
+				hx-target="next"
+				hx-trigger="load delay:1s, change, keyup delay:200ms changed"
 			></textarea>
-			<span
-				class="absolute right-2 top-3 animate-pulse"
-				_="on mouseenter toggle @hidden on next <span/> until mouseleave"
-			>
-				@warningIcon()
-			</span>
-			<span
-				class="absolute -top-8 right-4 bg-base-300 z-10 rounded-md rounded-br-xl p-2"
-				hidden
-			>
-				Required
-			</span>
+			<div></div>
 			<span class="absolute right-0 bottom-2 visible" id="md-icon">
 				@mdIcon()
 			</span>
@@ -63,19 +47,11 @@ templ DiscussionForm(url string) {
 				id="url"
 				name="url"
 				value={ fmt.Sprintf("%s", url) }
+				hx-get="/discussions/url"
+				hx-target="next"
+				hx-trigger="load delay:1s, change, keyup delay:200ms changed"
 			/>
-			<span
-				class="absolute right-2 top-3 bg-base-100 animate-pulse"
-				_="on mouseenter toggle @hidden on next <span/> until mouseleave"
-			>
-				@warningIcon()
-			</span>
-			<span
-				class="absolute -top-8 right-4 bg-base-300 z-10 rounded-md rounded-br-xl p-2"
-				hidden
-			>
-				Required
-			</span>
+			<div></div>
 		</div>
 		<button
 			id="discussion-form-submit-btn"
@@ -105,4 +81,19 @@ templ warningIcon() {
 			d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
 		></path>
 	</svg>
+}
+
+templ DiscussionFormErrorField(message string) {
+	<span
+		class="absolute right-2 top-3 bg-base-100 animate-pulse"
+		_="on mouseenter toggle @hidden on next <span/> until mouseleave"
+	>
+		@warningIcon()
+	</span>
+	<span
+		class="absolute -top-8 right-4 bg-base-300 z-10 rounded-md rounded-br-xl p-2"
+		hidden
+	>
+		{ message }
+	</span>
 }
