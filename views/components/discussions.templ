@@ -13,7 +13,7 @@ templ DiscussionForm(url string) {
 				class="grow input input-bordered flex items-center"
 			/>
 			<span
-				class="absolute right-2 top-3 bg-base-100"
+				class="absolute right-2 top-3 bg-base-100 animate-pulse"
 				_="on mouseenter toggle @hidden on next <span/> until mouseleave"
 			>
 				@warningIcon()
@@ -34,13 +34,13 @@ templ DiscussionForm(url string) {
 				class="grow textarea textarea-bordered flex resize-none"
 				_="
 					on focus
-						add @hidden to #md-icon
+						remove .visible from #md-icon
 					on blur
-						remove @hidden from #md-icon
+						add .visible to #md-icon
 				"
 			></textarea>
 			<span
-				class="absolute right-2 top-3"
+				class="absolute right-2 top-3 animate-pulse"
 				_="on mouseenter toggle @hidden on next <span/> until mouseleave"
 			>
 				@warningIcon()
@@ -51,7 +51,7 @@ templ DiscussionForm(url string) {
 			>
 				Required
 			</span>
-			<span class="absolute right-0 bottom-2" id="md-icon">
+			<span class="absolute right-0 bottom-2 visible" id="md-icon">
 				@mdIcon()
 			</span>
 		</div>
@@ -65,7 +65,7 @@ templ DiscussionForm(url string) {
 				value={ fmt.Sprintf("%s", url) }
 			/>
 			<span
-				class="absolute right-2 top-3 bg-base-100"
+				class="absolute right-2 top-3 bg-base-100 animate-pulse"
 				_="on mouseenter toggle @hidden on next <span/> until mouseleave"
 			>
 				@warningIcon()
