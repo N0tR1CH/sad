@@ -6,4 +6,8 @@ window.addEventListener("DOMContentLoaded", (): void => {
   Socket.init();
   window.htmx = htmxLib;
   _hyperscript.browserInit();
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  window.htmx.config.globalViewTransitions = true;
 });

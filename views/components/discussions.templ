@@ -101,7 +101,7 @@ templ warningIcon() {
 
 templ DiscussionFormErrorField(message string) {
 	<span
-		class="absolute right-2 top-3 bg-base-100 animate-pulse"
+		class="absolute right-2 top-3 animate-pulse"
 		_="on mouseenter toggle @hidden on next <span/> until mouseleave"
 	>
 		@warningIcon()
