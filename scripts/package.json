@@ -30,6 +30,8 @@
     "ws": "8.18.0"
   },
   "dependencies": {
+    "alpinejs": "^3.14.1",
+    "easymde": "^2.18.0",
     "htmx.org": "2.0.1",
     "hyperscript.org": "0.9.12"
   }

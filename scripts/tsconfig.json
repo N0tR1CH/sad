@@ -8,5 +8,5 @@
     "allowJs": true,
     "types": ["htmx.org/dist/htmx"]
   },
-  "include": ["src/**/*", "types/**/*"]
+  "include": ["src/**/*"]
 }

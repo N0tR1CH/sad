@@ -1,14 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@layer utilities {
-  #md-icon {
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
-  }
-
-  #md-icon.visible {
-    opacity: 1;
-  }
-}
