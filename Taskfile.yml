@@ -2,13 +2,15 @@ version: "3"
 
 tasks:
   build:
-    deps: [build-css, gen-templ, bundle-js]
     summary: |
       Builds share and discuss app to an executable
 
       It gets main.go file and runs go build utility to build an executable that can be deployed.
     dir: "./cmd/api"
     cmds:
+      - task: build-css
+      - task: gen-templ
+      - task: bundle-js
       - cmd: echo "Building..."
         silent: true
       - go build -o ../../bin/sad-app
@@ -64,6 +66,16 @@ tasks:
       - cmd: echo "Building minified css..."
         silent: true
       - tailwindcss -i ./scripts/input.css -o ./cmd/web/assets/css/output.css --minify
+     
+  watch-css:
+    summary: |
+      Builds share and discuss app to an executable
+
+      It gets main.go file and runs go build utility to build an executable that can be deployed.
+    cmds:
+      - cmd: echo "Watching css..."
+        silent: true
+      - tailwindcss -i ./scripts/input.css -o ./cmd/web/assets/css/output.css --watch --minify
 
   bundle-js:
     summary: |
@@ -75,6 +87,13 @@ tasks:
       - cmd: echo "Bundling JS"
         silent: true
       - pnpm run build
+
+  watch-js:
+    dir: "./scripts"
+    cmds:
+      - cmd: echo "Watching JS"
+        silent: true
+      - pnpm run dev
 
   enable-hr:
     summary: |

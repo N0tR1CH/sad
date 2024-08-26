@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "format": "prettier --write \"./src/**/*.{js,ts}\"",
     "lint": "eslint \"./src/**/*.{js,ts}\" --quiet",
-    "build": "esbuild src/app.ts --bundle --minify --outfile=../cmd/web/assets/js/out.js"
+    "build": "esbuild src/app.ts --bundle --minify --outfile=../cmd/web/assets/js/out.js",
+    "dev": "esbuild src/app.ts --bundle --watch --minify --outfile=../cmd/web/assets/js/out.js"
   },
   "keywords": [],
   "author": "",

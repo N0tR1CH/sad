@@ -1,0 +1,5 @@
+web: task watch
+db: docker compose up
+css: task watch-css
+js: task watch-js
+hr: task enable-hr
