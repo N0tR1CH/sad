@@ -4,44 +4,44 @@ import "fmt"
 
 templ DiscussionForm(url string) {
 	<script type="text/javascript">
-		document.body.addEventListener('htmx:beforeSwap', (e) => {
-			if(e.detail.xhr.status !== 400){
-				return;
-			} 
+    document.body.addEventListener('htmx:beforeSwap', (e) => {
+      if (e.detail.xhr.status !== 400) {
+        return;
+      }
 
-			if (new URL(e.detail.xhr.responseURL).pathname !== "/discussions") {
-				return;
-			}
-			e.detail.isError = false;
-			e.detail.shouldSwap = true;
-			e.detail.target = htmx.find("#discussion-errors-container");
-		});
-	</script>
+      if (new URL(e.detail.xhr.responseURL).pathname !== "/discussions") {
+        return;
+      }
+      e.detail.isError = false;
+      e.detail.shouldSwap = true;
+      e.detail.target = htmx.find("#discussion-errors-container");
+    });
+  </script>
 	<form
 		hx-post="/discussions"
-		class="grid grid-cols-1 grid-rows-[repeat(4,_auto)] grid-flow-row gap-y-4 my-8 px-4"
+		class="my-8 grid grid-flow-row grid-cols-1 grid-rows-[repeat(4,_auto)] gap-y-4 px-4"
 		_="on submit toggle @disabled on #discussion-form-submit-btn until htmx:afterOnLoad"
 	>
-		<div class="relative flex flex-col gap-2 h-12">
-			<label for="title" class="absolute -top-2 left-2 bg-base-100 text-xs px-2">Title</label>
+		<div class="relative flex h-12 flex-col gap-2">
+			<label for="title" class="absolute -top-2 left-2 bg-base-100 px-2 text-xs">Title</label>
 			<input
 				id="title"
 				type="text"
 				name="title"
-				class="grow input input-bordered flex items-center"
+				class="input input-bordered flex grow items-center"
 				hx-get="/discussions/title"
 				hx-target="next"
 				hx-trigger="load delay:1s, change, keyup delay:200ms changed"
 			/>
 			<div></div>
 		</div>
-		<div class="relative flex gap-2 row-span-2 flex-col h-96 prose !max-w-none">
-			<label for="description" class="absolute -top-2 left-2 bg-base-100 text-xs px-2 z-10">Description</label>
+		<div class="prose relative row-span-2 flex h-96 !max-w-none flex-col gap-2">
+			<label for="description" class="absolute -top-2 left-2 z-10 bg-base-100 px-2 text-xs">Description</label>
 			<textarea
 				type="text"
 				id="description"
 				name="description"
-				class="grow flex resize-none"
+				class="flex grow resize-none"
 				x-init="
 					(() => {
 						const editorOptions = {
@@ -63,25 +63,22 @@ templ DiscussionForm(url string) {
 			></textarea>
 			<div id="discussion-description-err-container"></div>
 		</div>
-		<div class="relative h-12 flex flex-col gap-2">
-			<label for="url" class="absolute -top-2 left-2 bg-base-100 text-xs px-2">Url</label>
+		<div class="relative flex h-12 flex-col gap-2">
+			<label for="url" class="absolute -top-2 left-2 bg-base-100 px-2 text-xs">Url</label>
 			<input
-				class="grow input input-bordered flex items-center"
+				class="input input-bordered flex grow items-center"
 				type="url"
 				id="url"
 				name="url"
-				value={ fmt.Sprintf("%s", url) }
+				value={ fmt.Sprintf("%s",
+      url) }
 				hx-get="/discussions/url"
 				hx-target="next"
 				hx-trigger="load delay:1s, change, keyup delay:200ms changed"
 			/>
 			<div></div>
 		</div>
-		<button
-			id="discussion-form-submit-btn"
-			type="submit"
-			class="btn"
-		>
+		<button id="discussion-form-submit-btn" type="submit" class="btn">
 			Share
 		</button>
 	</form>
@@ -89,12 +86,7 @@ templ DiscussionForm(url string) {
 }
 
 templ warningIcon() {
-	<svg
-		xmlns="http://www.w3.org/2000/svg"
-		class="h-6 w-6 shrink-0 stroke-current"
-		fill="none"
-		viewBox="0 0 24 24"
-	>
+	<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
 		<path
 			stroke-linecap="round"
 			stroke-linejoin="round"
@@ -105,16 +97,10 @@ templ warningIcon() {
 }
 
 templ DiscussionFormErrorField(message string) {
-	<span
-		class="absolute right-2 top-3 animate-pulse"
-		_="on mouseenter toggle @hidden on next <span/> until mouseleave"
-	>
+	<span class="absolute right-2 top-3 animate-pulse" _="on mouseenter toggle @hidden on next <span/> until mouseleave">
 		@warningIcon()
 	</span>
-	<span
-		class="absolute -top-8 right-4 bg-base-300 z-10 rounded-md rounded-br-xl p-2"
-		hidden
-	>
+	<span class="absolute -top-8 right-4 z-10 rounded-md rounded-br-xl bg-base-300 p-2" hidden>
 		{ message }
 	</span>
 }
@@ -133,12 +119,7 @@ templ DiscussionFormErrors(messages []string) {
 				setTimeout(() => { document.querySelector('#discussion-errors-container > div').remove() }, 3500)
 			"
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="h-6 w-6 shrink-0 stroke-current"
-				fill="none"
-				viewBox="0 0 24 24"
-			>
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
 				<path
 					stroke-linecap="round"
 					stroke-linejoin="round"

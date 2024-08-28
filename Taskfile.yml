@@ -66,7 +66,7 @@ tasks:
       - cmd: echo "Building minified css..."
         silent: true
       - tailwindcss -i ./scripts/input.css -o ./cmd/web/assets/css/output.css --minify
-     
+
   watch-css:
     summary: |
       Builds share and discuss app to an executable
@@ -147,3 +147,8 @@ tasks:
       Migrate down by specific number of migrations
     cmds:
       - migrate -path=./migrations -database=$(cat .env/development/database | tail -n1 | cut -d"=" -f2-3) down {{ .MIGRATIONS_COUNT }}
+
+  ##############################OVERMIND########################################
+  overmind:
+    cmds:
+      - overmind start -f Procfile.dev
