@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/N0tR1CH/sad/internal/data"
+	"github.com/charmbracelet/log"
 	_ "github.com/lib/pq"
 )
 
@@ -88,7 +89,17 @@ func newApplication(cfg *config, logger *slog.Logger, models data.Models) *appli
 }
 
 func newLogger() *slog.Logger {
-	return slog.New(slog.NewTextHandler(os.Stdout, nil))
+	return slog.New(
+		log.NewWithOptions(
+			os.Stdout,
+			log.Options{
+				ReportCaller:    true,
+				ReportTimestamp: true,
+				TimeFormat:      time.DateTime,
+				Prefix:          "SAD 😥",
+			},
+		),
+	)
 }
 
 func newServer(port int, handler http.Handler) *http.Server {
@@ -111,7 +122,11 @@ func main() {
 		os.Exit(exitFailure)
 	}
 	defer db.Close()
-	logger.Info("database connection opened", "dbStats", db.Stats())
+	logger.Info(
+		"database connection opened",
+		"dbStats",
+		fmt.Sprintf("%+v", db.Stats()),
+	)
 
 	app := newApplication(cfg, logger, data.NewModels(db))
 	srv := newServer(cfg.port, app.routes())

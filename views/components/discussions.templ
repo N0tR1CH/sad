@@ -42,24 +42,17 @@ templ DiscussionForm(url string) {
 				id="description"
 				name="description"
 				class="flex grow resize-none"
+				x-data="{ editor: null }"
 				x-init="
-					(() => {
-						const editorOptions = {
-							element: document.getElementById('description'),
-							maxHeight: '16rem',
-							toolbarTips: false,
-						};
-
-						const descriptionEditor = new EasyMDE(editorOptions);
-
-						descriptionEditor.codemirror.on('change', () => {
-							document.getElementById('description').value = descriptionEditor.value();
-						});
-					})();
-				"
+          editor = new EasyMDE({element: $el, maxHeight: '16rem', toolbarTips: false });
+          editor.codemirror.on('change', () => {
+            $el.value = editor.value();
+            $el.dispatchEvent(new Event('input'));
+          });
+        "
 				hx-get="/discussions/description"
 				hx-target="#discussion-description-err-container"
-				hx-trigger="load delay:1s, change, keyup delay:200ms changed"
+				hx-trigger="load delay:1s, input delay:200ms"
 			></textarea>
 			<div id="discussion-description-err-container"></div>
 		</div>
