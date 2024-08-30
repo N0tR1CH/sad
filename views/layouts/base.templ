@@ -19,22 +19,24 @@ templ Base() {
 	<!DOCTYPE html>
 	<html lang="en">
 		@Head()
-		<body hx-boost="true" class="h-screen grid grid-rows-[auto_1fr_auto]">
-			<header>
-				<div class="navbar bg-neutral text-neutral-content flex items-center justify-center">
-					<a href="/">
-						<button class="btn btn-ghost text-xl">
-							SAD
-						</button>
-					</a>
-				</div>
-			</header>
-			<main class="container mx-auto">
-				{ children... }
-			</main>
-			<footer class="footer bg-neutral font-bold text-neutral-content items-center justify-center p-4">
-				<p>Copyright © 2024 - All right reserved</p>
-			</footer>
+		<body hx-boost="true">
+			<div class="h-screen grid grid-rows-[auto_1fr_auto]">
+				<header>
+					<div class="navbar bg-neutral text-neutral-content flex items-center justify-center">
+						<a href="/">
+							<button class="btn btn-ghost text-xl">
+								SAD
+							</button>
+						</a>
+					</div>
+				</header>
+				<main class="container mx-auto">
+					{ children... }
+				</main>
+				<footer class="footer bg-neutral font-bold text-neutral-content items-center justify-center p-4">
+					<p>Copyright © 2024 - All right reserved</p>
+				</footer>
+			</div>
 		</body>
 	</html>
 }

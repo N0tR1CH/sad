@@ -13,7 +13,11 @@ import (
 func (app *application) routes() http.Handler {
 	r := echo.New()
 
-	r.Validator = NewCustomValidator(validator.New(validator.WithRequiredStructEnabled()))
+	r.Validator = NewCustomValidator(
+		validator.New(
+			validator.WithRequiredStructEnabled(),
+		),
+	)
 
 	app.middleware(r)
 

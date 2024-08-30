@@ -34,6 +34,7 @@
     "alpinejs": "^3.14.1",
     "easymde": "^2.18.0",
     "htmx.org": "2.0.1",
-    "hyperscript.org": "0.9.12"
+    "hyperscript.org": "0.9.12",
+    "sweetalert2": "^11.12.4"
   }
 }

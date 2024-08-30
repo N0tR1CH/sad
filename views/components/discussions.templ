@@ -3,24 +3,9 @@ package components
 import "fmt"
 
 templ DiscussionForm(url string) {
-	<script type="text/javascript">
-    document.body.addEventListener('htmx:beforeSwap', (e) => {
-      if (e.detail.xhr.status !== 400) {
-        return;
-      }
-
-      if (new URL(e.detail.xhr.responseURL).pathname !== "/discussions") {
-        return;
-      }
-      e.detail.isError = false;
-      e.detail.shouldSwap = true;
-      e.detail.target = htmx.find("#discussion-errors-container");
-    });
-  </script>
 	<form
-		hx-post="/discussions"
+		x-data
 		class="my-8 grid grid-flow-row grid-cols-1 grid-rows-[repeat(4,_auto)] gap-y-4 px-4"
-		_="on submit toggle @disabled on #discussion-form-submit-btn until htmx:afterOnLoad"
 	>
 		<div class="relative flex h-12 flex-col gap-2">
 			<label for="title" class="absolute -top-2 left-2 bg-base-100 px-2 text-xs">Title</label>
@@ -63,15 +48,31 @@ templ DiscussionForm(url string) {
 				type="url"
 				id="url"
 				name="url"
-				value={ fmt.Sprintf("%s",
-      url) }
+				value={ fmt.Sprintf("%s", url) }
 				hx-get="/discussions/url"
 				hx-target="next"
 				hx-trigger="load delay:1s, change, keyup delay:200ms changed"
 			/>
 			<div></div>
 		</div>
-		<button id="discussion-form-submit-btn" type="submit" class="btn">
+		<button
+			id="discussion-form-submit-btn"
+			type="button"
+			class="btn"
+			hx-post="/discussions"
+			hx-trigger="confirmed"
+			@click="
+        Swal.fire({
+          title: 'Create new discussion?',
+          showCancelButton: true,
+          confirmButtonText: 'Create'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            $el.dispatchEvent(new Event('confirmed'));
+          }
+        });
+      "
+		>
 			Share
 		</button>
 	</form>
@@ -99,7 +100,12 @@ templ DiscussionFormErrorField(message string) {
 }
 
 templ DiscussionFormErrors(messages []string) {
-	<div x-data="{ open: false }">
+	Share
+	<div
+		id="discussion-errors-container"
+		hx-swap-oob="true"
+		x-data="{ open: false }"
+	>
 		<div
 			role="alert"
 			class="alert alert-error"
@@ -107,9 +113,8 @@ templ DiscussionFormErrors(messages []string) {
 			x-transition:enter.duration.500ms
 			x-transition:leave.duration.400ms
 			x-init="
-				setTimeout(() => { open = true }, 500);
-				setTimeout(() => { open = false }, 3000)
-				setTimeout(() => { document.querySelector('#discussion-errors-container > div').remove() }, 3500)
+				setTimeout(() => { open = true }, 50);
+				setTimeout(() => { open = false }, 1500);
 			"
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">

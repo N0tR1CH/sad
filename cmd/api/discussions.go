@@ -54,7 +54,11 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 				errs = append(errs, ve.Error())
 			}
 		}
-		return views.Render(c, http.StatusBadRequest, components.DiscussionFormErrors(errs))
+		return views.Render(
+			c,
+			http.StatusBadRequest,
+			components.DiscussionFormErrors(errs),
+		)
 	}
 
 	if err := app.models.Discussions.Insert(
@@ -67,7 +71,9 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 		return err
 	}
 
-	return c.String(http.StatusOK, fmt.Sprintf("%v", input))
+	c.Response().Header().Set("HX-Retarget", "body")
+	c.Response().Header().Set("HX-Replace-Url", "/")
+	return views.Render(c, http.StatusOK, pages.Home())
 }
 
 func (app *application) validateDiscussionTitleHandler(c echo.Context) error {
