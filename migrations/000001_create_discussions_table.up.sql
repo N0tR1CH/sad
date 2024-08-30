@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS discussions (
-    id bigserial PRIMARY KEY,
-    created_at timestamp(0) with time zone NOT NULL DEFAULT NOW(),
-    updated_at timestamp(0) with time zone NOT NULL DEFAULT NOW(),
-    url text NOT NULL,
-    title text NOT NULL,
-    description text NOT NULL
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    created_at TIMESTAMPTZ DEFAULT current_timestamp,
+    updated_at TIMESTAMPTZ DEFAULT current_timestamp,
+    url TEXT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL
 );
