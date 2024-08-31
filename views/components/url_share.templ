@@ -1,7 +1,10 @@
 package components
 
 templ UrlShare() {
-	<div id="url-share-container" class="grid h-16 grid-cols-6 grid-rows-[auto] group px-2 py-4">
+	<div
+		id="url-share-container"
+		class="group grid h-16 grid-cols-6 grid-rows-[auto] px-2 py-4"
+	>
 		@UrlShareInputField()
 		@UrlShareButton()
 	</div>
@@ -13,7 +16,7 @@ templ UrlShareInputField() {
 		name="url"
 		pattern="https://.*"
 		placeholder="https://example.com"
-		class="col-[1_/_7] row-[1_/_2] rounded-full h-[3rem] pl-4 pr-[calc(100%/6*2+1rem)] py-2 bg-neutral border-2 border-gray-600 focus:border-gray-500 outline-none placeholder-gray-500"
+		class="col-[1_/_7] row-[1_/_2] h-[3rem] rounded-full border-2 border-gray-600 bg-neutral py-2 pl-4 pr-[calc(100%/6*2+1rem)] placeholder-gray-500 outline-none focus:border-gray-500"
 		_="
             on input
                 if event.target.value matches '(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})' then
@@ -24,7 +27,7 @@ templ UrlShareInputField() {
 
                     if event.target.value.length is greater than 0
                         add .border-red-500
-                    else 
+                    else
                         remove .border-red-500
                     end
                 end
@@ -36,7 +39,7 @@ templ UrlShareInputField() {
 templ UrlShareButton() {
 	<button
 		disabled
-		class="col-[5_/_7] row-[1_/_2] btn btn-outline rounded-full"
+		class="btn btn-outline col-[5_/_7] row-[1_/_2] rounded-full"
 		hx-get="/discussions/new"
 		hx-include="[name='url']"
 		hx-target="#url-share-container"

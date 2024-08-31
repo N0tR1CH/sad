@@ -23,6 +23,7 @@ func (app *application) routes() http.Handler {
 
 	staticFilesHandler := app.staticFilesHandler()
 
+	r.Static("/public", "cmd/web/public")
 	r.GET("/static/*", echo.WrapHandler(staticFilesHandler))
 	r.GET("/healthcheck", app.healthcheckhandler)
 	r.GET("/", app.homeHandler)
