@@ -12,7 +12,7 @@ import (
 
 	"github.com/N0tR1CH/sad/internal/data"
 	"github.com/charmbracelet/log"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 const version = "1.0.0"
@@ -139,7 +139,7 @@ func main() {
 }
 
 func openDB(cfg *config) (*sql.DB, error) {
-	db, err := sql.Open("postgres", cfg.db.dsn)
+	db, err := sql.Open("pgx", cfg.db.dsn)
 	if err != nil {
 		return nil, err
 	}
