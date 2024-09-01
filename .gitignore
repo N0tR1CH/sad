@@ -36,3 +36,6 @@ tmp/
 
 # Postgres docker volume
 db_data
+
+# Public
+cmd/web/public/*
