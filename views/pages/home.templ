@@ -9,39 +9,35 @@ templ Home() {
 	@layouts.Base() {
 		@components.Logo()
 		@components.UrlShare()
-		@DiscussionCards() {
-			@DiscussionCard()
-			@DiscussionCard()
-			@DiscussionCard()
-			@DiscussionCard()
+		@components.DiscussionCards() {
+			@components.DiscussionCard(
+				components.DiscussionCardViewModel{
+					ImgSrc:    "https://page2images.b-cdn.net/ccimages/e9/7c/K8FpkTDMR2Hjmxh3.png",
+					CardTitle: "Card title",
+				},
+				false,
+			)
+			@components.DiscussionCard(
+				components.DiscussionCardViewModel{
+					ImgSrc:    "https://page2images.b-cdn.net/ccimages/e9/7c/K8FpkTDMR2Hjmxh3.png",
+					CardTitle: "Card title",
+				},
+				false,
+			)
+			@components.DiscussionCard(
+				components.DiscussionCardViewModel{
+					ImgSrc:    "https://page2images.b-cdn.net/ccimages/e9/7c/K8FpkTDMR2Hjmxh3.png",
+					CardTitle: "Card title",
+				},
+				false,
+			)
+			@components.DiscussionCard(
+				components.DiscussionCardViewModel{
+					ImgSrc:    "https://page2images.b-cdn.net/ccimages/e9/7c/K8FpkTDMR2Hjmxh3.png",
+					CardTitle: "Card title",
+				},
+				false,
+			)
 		}
 	}
-}
-
-templ DiscussionCards() {
-	<section
-		id="discussion-cards"
-		class="columns-1 py-2 sm:columns-2 xl:columns-4"
-	>
-		{ children... }
-	</section>
-}
-
-templ DiscussionCard() {
-	<div class="card card-compact bg-base-100 w-72 shadow-xl mx-auto break-inside-avoid-column">
-		<figure>
-			<img
-				src="https://page2images.b-cdn.net/ccimages/e9/7c/K8FpkTDMR2Hjmxh3.png"
-				alt="Discussion"
-				class="w-full"
-			/>
-		</figure>
-		<div class="card-body">
-			<h2 class="card-title">Discussion title</h2>
-			<p>Discussion description</p>
-			<div class="card-actions justify-end">
-				<button class="btn btn-primary">Discuss</button>
-			</div>
-		</div>
-	</div>
 }

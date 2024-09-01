@@ -141,3 +141,57 @@ func (app *application) validateDiscussionUrlHandler(c echo.Context) error {
 	}
 	return c.String(http.StatusOK, "")
 }
+
+func (app *application) genDiscussionPreview(c echo.Context) error {
+	var input struct {
+		Title       string `query:"title" validate:"required,max=130"`
+		Description string `query:"description" validate:"required,max=4000"`
+		Url         string `query:"url" validate:"required,url"`
+	}
+
+	if err := c.Bind(&input); err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
+	}
+
+	if err := c.Validate(&input); err != nil {
+		errs := make([]string, 0, len(err.(validator.ValidationErrors)))
+		for _, ve := range err.(validator.ValidationErrors) {
+			switch ve.Tag() {
+			case "required":
+				errs = append(
+					errs,
+					fmt.Sprintf("Field '%s' can't be blank.", ve.Field()),
+				)
+			case "max":
+				errs = append(
+					errs,
+					fmt.Sprintf(
+						"Field '%s' maximum length is %s characters.",
+						ve.Field(),
+						ve.Param(),
+					),
+				)
+			default:
+				errs = append(errs, ve.Error())
+			}
+		}
+		return c.String(http.StatusBadRequest, "Wrong params!")
+	}
+
+	resPath, err := app.services.ChromeDp.GenScreenshot(c, input.Url)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Couldn't generate preview")
+	}
+
+	return views.Render(
+		c,
+		http.StatusOK,
+		components.DiscussionCard(
+			components.DiscussionCardViewModel{
+				CardTitle: input.Title,
+				ImgSrc:    resPath,
+			},
+			true,
+		),
+	)
+}

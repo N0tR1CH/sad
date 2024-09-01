@@ -53,4 +53,6 @@ func (app *application) discussionsRoutes(e *echo.Echo) {
 	g.GET("/title", app.validateDiscussionTitleHandler)
 	g.GET("/description", app.validateDiscussionDescriptionHandler)
 	g.GET("/url", app.validateDiscussionUrlHandler)
+	// Generating discussion card preview
+	g.GET("/preview", app.genDiscussionPreview)
 }

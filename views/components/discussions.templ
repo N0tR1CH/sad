@@ -8,7 +8,9 @@ templ DiscussionForm(url string) {
 		class="my-8 grid grid-flow-row grid-cols-1 grid-rows-[repeat(4,_auto)] gap-y-4 px-4"
 	>
 		<div class="relative flex h-12 flex-col gap-2">
-			<label for="title" class="absolute -top-2 left-2 bg-base-100 px-2 text-xs">Title</label>
+			<label for="title" class="absolute -top-2 left-2 bg-base-100 px-2 text-xs">
+				Title
+			</label>
 			<input
 				id="title"
 				type="text"
@@ -21,7 +23,9 @@ templ DiscussionForm(url string) {
 			<div></div>
 		</div>
 		<div class="prose relative row-span-2 flex h-96 !max-w-none flex-col gap-2">
-			<label for="description" class="absolute -top-2 left-2 z-10 bg-base-100 px-2 text-xs">Description</label>
+			<label for="description" class="absolute -top-2 left-2 z-10 bg-base-100 px-2 text-xs">
+				Description
+			</label>
 			<textarea
 				type="text"
 				id="description"
@@ -42,7 +46,9 @@ templ DiscussionForm(url string) {
 			<div id="discussion-description-err-container"></div>
 		</div>
 		<div class="relative flex h-12 flex-col gap-2">
-			<label for="url" class="absolute -top-2 left-2 bg-base-100 px-2 text-xs">Url</label>
+			<label for="url" class="absolute -top-2 left-2 bg-base-100 px-2 text-xs">
+				Url
+			</label>
 			<input
 				class="input input-bordered flex grow items-center"
 				type="url"
@@ -65,6 +71,23 @@ templ DiscussionForm(url string) {
         Swal.fire({
           title: 'Create new discussion?',
           showCancelButton: true,
+          didOpen: () => {
+            htmx.ajax(
+              'GET',
+              '/discussions/preview',
+              {
+                target: '#preview',
+                swap:'outerHTML',
+                values: htmx.values(htmx.find('form'))
+              }
+            );
+          },
+          html: `
+          <h2 class='text-center font-bold text-3xl'>Preview</h2>
+          <div id='preview'>
+            <span class='loading loading-dots loading-lg'></span>
+          </div>
+          `,
           confirmButtonText: 'Create'
         }).then((result) => {
           if (result.isConfirmed) {
@@ -80,7 +103,12 @@ templ DiscussionForm(url string) {
 }
 
 templ warningIcon() {
-	<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+	<svg
+		xmlns="http://www.w3.org/2000/svg"
+		class="h-6 w-6 shrink-0 stroke-current"
+		fill="none"
+		viewBox="0 0 24 24"
+	>
 		<path
 			stroke-linecap="round"
 			stroke-linejoin="round"
@@ -91,10 +119,16 @@ templ warningIcon() {
 }
 
 templ DiscussionFormErrorField(message string) {
-	<span class="absolute right-2 top-3 animate-pulse" _="on mouseenter toggle @hidden on next <span/> until mouseleave">
+	<span
+		class="absolute right-2 top-3 animate-pulse"
+		_="on mouseenter toggle @hidden on next <span/> until mouseleave"
+	>
 		@warningIcon()
 	</span>
-	<span class="absolute -top-8 right-4 z-10 rounded-md rounded-br-xl bg-base-300 p-2" hidden>
+	<span
+		class="absolute -top-8 right-4 z-10 rounded-md rounded-br-xl bg-base-300 p-2"
+		hidden
+	>
 		{ message }
 	</span>
 }
@@ -117,7 +151,12 @@ templ DiscussionFormErrors(messages []string) {
 				setTimeout(() => { open = false }, 1500);
 			"
 		>
-			<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-6 w-6 shrink-0 stroke-current"
+				fill="none"
+				viewBox="0 0 24 24"
+			>
 				<path
 					stroke-linecap="round"
 					stroke-linejoin="round"
@@ -131,7 +170,47 @@ templ DiscussionFormErrors(messages []string) {
 					<li>{ fmt.Sprintf("%s", message) }</li>
 				}
 			</ul>
-			<button @click="open = !open" class="btn btn-outline">Hide Error</button>
+			<button
+				@click="open = !open"
+				class="btn btn-outline"
+			>
+				Hide Error
+			</button>
+		</div>
+	</div>
+}
+
+templ DiscussionCards() {
+	<section
+		id="discussion-cards"
+		class="columns-1 py-2 sm:columns-2 xl:columns-4"
+	>
+		{ children... }
+	</section>
+}
+
+type DiscussionCardViewModel struct {
+	ImgSrc    string
+	CardTitle string
+}
+
+templ DiscussionCard(discussionCardViewModel DiscussionCardViewModel, isPreview bool) {
+	<div
+		class={ "card card-compact bg-base-100 w-72 shadow-xl mx-auto break-inside-avoid-column",
+      templ.KV("pointer-events-none select-none", isPreview) }
+	>
+		<figure>
+			<img
+				src={ discussionCardViewModel.ImgSrc }
+				alt="Discussion"
+				class="w-full"
+			/>
+		</figure>
+		<div class="card-body">
+			<h2 class="card-title">{ discussionCardViewModel.CardTitle }</h2>
+			<div class="card-actions justify-end">
+				<button class="btn btn-primary">Discuss</button>
+			</div>
 		</div>
 	</div>
 }

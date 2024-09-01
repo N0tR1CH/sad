@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/N0tR1CH/sad/internal/data"
+	"github.com/N0tR1CH/sad/internal/services"
 	"github.com/charmbracelet/log"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -35,9 +36,10 @@ type config struct {
 }
 
 type application struct {
-	config *config
-	logger *slog.Logger
-	models data.Models
+	config   *config
+	logger   *slog.Logger
+	models   data.Models
+	services services.Services
 }
 
 func newConfig() *config {
@@ -84,8 +86,13 @@ func newConfig() *config {
 	return cfg
 }
 
-func newApplication(cfg *config, logger *slog.Logger, models data.Models) *application {
-	return &application{cfg, logger, models}
+func newApplication(
+	cfg *config,
+	logger *slog.Logger,
+	models data.Models,
+	services services.Services,
+) *application {
+	return &application{cfg, logger, models, services}
 }
 
 func newLogger() *slog.Logger {
@@ -128,7 +135,12 @@ func main() {
 		fmt.Sprintf("%+v", db.Stats()),
 	)
 
-	app := newApplication(cfg, logger, data.NewModels(db))
+	app := newApplication(
+		cfg,
+		logger,
+		data.NewModels(db),
+		services.NewServices(logger),
+	)
 	srv := newServer(cfg.port, app.routes())
 
 	logger.Info("server started", "env", cfg.env, "address", srv.Addr)
