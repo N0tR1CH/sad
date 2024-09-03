@@ -3,41 +3,43 @@ package pages
 import (
 	"github.com/N0tR1CH/sad/views/components"
 	"github.com/N0tR1CH/sad/views/layouts"
+	"github.com/N0tR1CH/sad/internal/data"
 )
 
-templ Home() {
+type HomeViewModel struct {
+	discussionCardViewModels []components.DiscussionCardViewModel
+}
+
+func NewHomeViewModel(discussions []data.Discussion) HomeViewModel {
+	dcvms := make([]components.DiscussionCardViewModel, 0, len(discussions))
+
+	for _, discussion := range discussions {
+		dcvms = append(
+			dcvms,
+			components.DiscussionCardViewModel{
+				ImgSrc:    discussion.PreviewSrc,
+				CardTitle: discussion.Title,
+			},
+		)
+	}
+
+	return HomeViewModel{discussionCardViewModels: dcvms}
+}
+
+templ Home(hvm HomeViewModel) {
 	@layouts.Base() {
 		@components.Logo()
 		@components.UrlShare()
 		@components.DiscussionCards() {
-			@components.DiscussionCard(
-				components.DiscussionCardViewModel{
-					ImgSrc:    "https://page2images.b-cdn.net/ccimages/e9/7c/K8FpkTDMR2Hjmxh3.png",
-					CardTitle: "Card title",
-				},
-				false,
-			)
-			@components.DiscussionCard(
-				components.DiscussionCardViewModel{
-					ImgSrc:    "https://page2images.b-cdn.net/ccimages/e9/7c/K8FpkTDMR2Hjmxh3.png",
-					CardTitle: "Card title",
-				},
-				false,
-			)
-			@components.DiscussionCard(
-				components.DiscussionCardViewModel{
-					ImgSrc:    "https://page2images.b-cdn.net/ccimages/e9/7c/K8FpkTDMR2Hjmxh3.png",
-					CardTitle: "Card title",
-				},
-				false,
-			)
-			@components.DiscussionCard(
-				components.DiscussionCardViewModel{
-					ImgSrc:    "https://page2images.b-cdn.net/ccimages/e9/7c/K8FpkTDMR2Hjmxh3.png",
-					CardTitle: "Card title",
-				},
-				false,
-			)
+			for _, dcvm := range hvm.discussionCardViewModels {
+				@components.DiscussionCard(
+					components.DiscussionCardViewModel{
+						ImgSrc:    dcvm.ImgSrc,
+						CardTitle: dcvm.CardTitle,
+					},
+					false,
+				)
+			}
 		}
 	}
 }

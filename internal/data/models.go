@@ -14,6 +14,7 @@ type Models struct {
 	Discussions interface {
 		Insert(discussion *Discussion) error
 		Get(id int64) (*Discussion, error)
+		GetAll() ([]Discussion, error)
 		Update(discussion *Discussion) error
 		Delete(id int64) error
 	}
@@ -32,4 +33,5 @@ type Discussion struct {
 	Url         string
 	Title       string
 	Description string
+	PreviewSrc  string
 }

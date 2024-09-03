@@ -61,11 +61,21 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 		)
 	}
 
+	previewSrc, err := app.services.ChromeDp.GenScreenshot(input.Url)
+	if err != nil {
+		return views.Render(
+			c,
+			http.StatusBadRequest,
+			components.DiscussionFormErrors([]string{err.Error()}),
+		)
+	}
+
 	if err := app.models.Discussions.Insert(
 		&data.Discussion{
 			Title:       input.Title,
 			Url:         input.Url,
 			Description: input.Description,
+			PreviewSrc:  previewSrc,
 		},
 	); err != nil {
 		return err
@@ -73,7 +83,19 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 
 	c.Response().Header().Set("HX-Retarget", "body")
 	c.Response().Header().Set("HX-Replace-Url", "/")
-	return views.Render(c, http.StatusOK, pages.Home())
+
+	discussions, err := app.models.Discussions.GetAll()
+	if err != nil {
+		return err
+	}
+
+	return views.Render(
+		c,
+		http.StatusOK,
+		pages.Home(
+			pages.NewHomeViewModel(discussions),
+		),
+	)
 }
 
 func (app *application) validateDiscussionTitleHandler(c echo.Context) error {

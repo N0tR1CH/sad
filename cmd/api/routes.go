@@ -34,7 +34,18 @@ func (app *application) routes() http.Handler {
 }
 
 func (app *application) homeHandler(c echo.Context) error {
-	return views.Render(c, http.StatusOK, pages.Home())
+	discussions, err := app.models.Discussions.GetAll()
+	if err != nil {
+		return err
+	}
+
+	return views.Render(
+		c,
+		http.StatusOK,
+		pages.Home(
+			pages.NewHomeViewModel(discussions),
+		),
+	)
 }
 
 func (app *application) staticFilesHandler() http.Handler {
