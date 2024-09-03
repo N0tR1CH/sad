@@ -178,7 +178,7 @@ func (app *application) genDiscussionPreview(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "Wrong params!")
 	}
 
-	resPath, err := app.services.ChromeDp.GenScreenshot(c, input.Url)
+	resPath, err := app.services.ChromeDp.GenScreenshot(input.Url)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Couldn't generate preview")
 	}

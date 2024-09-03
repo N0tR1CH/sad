@@ -208,9 +208,11 @@ templ DiscussionCard(discussionCardViewModel DiscussionCardViewModel, isPreview 
 		</figure>
 		<div class="card-body">
 			<h2 class="card-title">{ discussionCardViewModel.CardTitle }</h2>
-			<div class="card-actions justify-end">
-				<button class="btn btn-primary">Discuss</button>
-			</div>
+			if !isPreview {
+				<div class="card-actions justify-end">
+					<button class="btn btn-primary">Discuss</button>
+				</div>
+			}
 		</div>
 	</div>
 }
