@@ -26,7 +26,8 @@ func (app *application) routes() http.Handler {
 	r.Static("/public", "cmd/web/public")
 	r.GET("/static/*", echo.WrapHandler(staticFilesHandler))
 	r.GET("/healthcheck", app.healthcheckhandler)
-	r.GET("/", app.homeHandler)
+
+	r.GET("/", app.homeHandler, echo.WrapMiddleware(app.sessionManager.LoadAndSave))
 
 	app.discussionsRoutes(r)
 
@@ -56,10 +57,10 @@ func (app *application) staticFilesHandler() http.Handler {
 }
 
 func (app *application) discussionsRoutes(e *echo.Echo) {
-	g := e.Group("/discussions")
+	g := e.Group("/discussions", echo.WrapMiddleware(app.sessionManager.LoadAndSave))
 	// Creating new discussion
 	g.GET("/new", app.newDiscussionHandler)
-	g.POST("", app.createDiscussionHandler)
+	g.POST("/create", app.createDiscussionHandler)
 	// Validating discussion fields
 	g.GET("/title", app.validateDiscussionTitleHandler)
 	g.GET("/description", app.validateDiscussionDescriptionHandler)

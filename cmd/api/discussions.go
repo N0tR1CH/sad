@@ -81,19 +81,25 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 		return err
 	}
 
-	c.Response().Header().Set("HX-Retarget", "body")
+	c.Response().Header().Set("HX-Retarget", "#discussion-cards")
+	c.Response().Header().Set("HX-Reswap", "afterbegin")
 	c.Response().Header().Set("HX-Replace-Url", "/")
 
-	discussions, err := app.models.Discussions.GetAll()
-	if err != nil {
-		return err
-	}
+	views.Render(
+		c,
+		http.StatusOK,
+		components.UrlShareToSwap(),
+	)
 
 	return views.Render(
 		c,
 		http.StatusOK,
-		pages.Home(
-			pages.NewHomeViewModel(discussions),
+		components.DiscussionCard(
+			components.DiscussionCardViewModel{
+				CardTitle: input.Title,
+				ImgSrc:    previewSrc,
+			},
+			false,
 		),
 	)
 }

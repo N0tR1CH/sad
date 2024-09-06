@@ -12,7 +12,10 @@ import (
 
 	"github.com/N0tR1CH/sad/internal/data"
 	"github.com/N0tR1CH/sad/internal/services"
+	"github.com/alexedwards/scs/pgxstore"
+	"github.com/alexedwards/scs/v2"
 	"github.com/charmbracelet/log"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -36,10 +39,11 @@ type config struct {
 }
 
 type application struct {
-	config   *config
-	logger   *slog.Logger
-	models   data.Models
-	services services.Services
+	config         *config
+	logger         *slog.Logger
+	models         data.Models
+	services       services.Services
+	sessionManager *scs.SessionManager
 }
 
 func newConfig() *config {
@@ -91,8 +95,9 @@ func newApplication(
 	logger *slog.Logger,
 	models data.Models,
 	services services.Services,
+	sessionManager *scs.SessionManager,
 ) *application {
-	return &application{cfg, logger, models, services}
+	return &application{cfg, logger, models, services, sessionManager}
 }
 
 func newLogger() *slog.Logger {
@@ -119,6 +124,13 @@ func newServer(port int, handler http.Handler) *http.Server {
 	}
 }
 
+func newSessionManager(pool *pgxpool.Pool) *scs.SessionManager {
+	sm := scs.New()
+	sm.Store = pgxstore.New(pool)
+	sm.Lifetime = 12 * time.Hour
+	return sm
+}
+
 func main() {
 	cfg := newConfig()
 	logger := newLogger()
@@ -135,11 +147,19 @@ func main() {
 		fmt.Sprintf("%+v", db.Stats()),
 	)
 
+	pool, err := pgxpool.New(context.Background(), cfg.db.dsn)
+	if err != nil {
+		logger.Error("database problem", "err", err)
+		os.Exit(exitFailure)
+	}
+	defer pool.Close()
+
 	app := newApplication(
 		cfg,
 		logger,
 		data.NewModels(db),
 		services.NewServices(logger),
+		newSessionManager(pool),
 	)
 	srv := newServer(cfg.port, app.routes())
 

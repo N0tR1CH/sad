@@ -1,5 +1,30 @@
 package components
 
+templ UrlShareToSwap() {
+	<div id="discussion-form">
+		<script type="module">
+      (() => {
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+          }
+        });
+        Toast.fire({
+          icon: "success",
+          title: "Discussion created successfully"
+        });
+      })()
+    </script>
+		@UrlShare()
+	</div>
+}
+
 templ UrlShare() {
 	<div
 		id="url-share-container"
