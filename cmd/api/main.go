@@ -164,7 +164,8 @@ func main() {
 	srv := newServer(cfg.port, app.routes())
 
 	logger.Info("server started", "env", cfg.env, "address", srv.Addr)
-	if err := srv.ListenAndServe(); err != nil {
+
+	if err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem"); err != http.ErrServerClosed {
 		logger.Error("closing server...", "error", err.Error())
 		os.Exit(exitFailure)
 	}

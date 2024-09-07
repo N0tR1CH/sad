@@ -39,3 +39,6 @@ db_data
 
 # Public
 cmd/web/public/*
+
+# Certificate
+tls
