@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
 	"time"
 
 	"github.com/N0tR1CH/sad/internal/data"
@@ -179,9 +180,23 @@ func main() {
 
 	logger.Info("server started", "env", cfg.env, "address", srv.Addr)
 
-	if err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem"); err != http.ErrServerClosed {
-		logger.Error("closing server...", "error", err.Error())
-		os.Exit(exitFailure)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	go func() {
+		if err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem"); err != nil &&
+			err != http.ErrServerClosed {
+
+			logger.Error("closing server...", "error", err.Error())
+			os.Exit(exitFailure)
+		}
+	}()
+
+	<-ctx.Done()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	logger.Info("Server Timeout", "Info", "Killing server in 10 seconds")
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Error("Error when server shutdown", "Error", err.Error())
 	}
 }
 
