@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/N0tR1CH/sad/rate_limiter"
 	"github.com/N0tR1CH/sad/views"
 	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"golang.org/x/time/rate"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
@@ -66,25 +67,19 @@ var (
 		}
 	}
 
-	rateLimiterConfig = middleware.RateLimiterConfig{
-		Skipper: middleware.DefaultSkipper,
-		Store: middleware.NewRateLimiterMemoryStoreWithConfig(
-			middleware.RateLimiterMemoryStoreConfig{
-				Rate:      rate.Limit(10),
-				Burst:     30,
-				ExpiresIn: 3 * time.Minute,
-			},
-		),
-		IdentifierExtractor: func(c echo.Context) (string, error) {
-			id := c.RealIP()
-			return id, nil
-		},
-		ErrorHandler: func(c echo.Context, err error) error {
-			return c.JSON(http.StatusForbidden, nil)
-		},
-		DenyHandler: func(c echo.Context, identifier string, err error) error {
-			return c.JSON(http.StatusTooManyRequests, nil)
-		},
+	rateLimiterConfig = func() rate_limiter.Config {
+		client := redis.NewClient(&redis.Options{
+			Addr: "localhost:6379",
+		})
+		ctx := context.Background()
+		_ = client.FlushDB(ctx).Err()
+		return rate_limiter.Config{
+			Rediser:   client,
+			Max:       100,
+			Burst:     200,
+			Period:    10 * time.Second,
+			Algorithm: rate_limiter.SlidingWindowAlgorithm,
+		}
 	}
 )
 
@@ -97,7 +92,7 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Use(middleware.RequestLoggerWithConfig(requestLoggerConfig(app.logger)))
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(corsConfig(app.config.port)))
-	e.Use(middleware.RateLimiterWithConfig(rateLimiterConfig))
+	e.Use(rate_limiter.NewWithConfig(rateLimiterConfig()))
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return views.Render(c, http.StatusNotFound, pages.Page404())
 	})

@@ -12,16 +12,18 @@ require (
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/google/uuid v1.6.0
 	github.com/h2non/bimg v1.1.9
-	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/labstack/echo/v4 v4.12.0
+	github.com/redis/go-redis/v9 v9.6.1
+	github.com/shareed2k/go_limiter v0.0.9-0.20240229131048-52afdeaae893
 )
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/charmbracelet/lipgloss v0.10.0 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
-	github.com/cockroachdb/apd v1.1.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -29,16 +31,13 @@ require (
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
-	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -46,9 +45,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
