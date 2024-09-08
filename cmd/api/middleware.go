@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/N0tR1CH/sad/views"
 	"github.com/N0tR1CH/sad/views/pages"
@@ -64,14 +65,39 @@ var (
 			},
 		}
 	}
+
+	rateLimiterConfig = middleware.RateLimiterConfig{
+		Skipper: middleware.DefaultSkipper,
+		Store: middleware.NewRateLimiterMemoryStoreWithConfig(
+			middleware.RateLimiterMemoryStoreConfig{
+				Rate:      rate.Limit(10),
+				Burst:     30,
+				ExpiresIn: 3 * time.Minute,
+			},
+		),
+		IdentifierExtractor: func(c echo.Context) (string, error) {
+			id := c.RealIP()
+			return id, nil
+		},
+		ErrorHandler: func(c echo.Context, err error) error {
+			return c.JSON(http.StatusForbidden, nil)
+		},
+		DenyHandler: func(c echo.Context, identifier string, err error) error {
+			return c.JSON(http.StatusTooManyRequests, nil)
+		},
+	}
 )
+
+func DefaultSkipper(echo.Context) bool {
+	return false
+}
 
 func (app *application) middleware(e *echo.Echo) {
 	e.Pre(middleware.RemoveTrailingSlashWithConfig(trailingSlashConfig))
 	e.Use(middleware.RequestLoggerWithConfig(requestLoggerConfig(app.logger)))
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(corsConfig(app.config.port)))
-	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(20))))
+	e.Use(middleware.RateLimiterWithConfig(rateLimiterConfig))
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return views.Render(c, http.StatusNotFound, pages.Page404())
 	})

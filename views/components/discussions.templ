@@ -177,7 +177,6 @@ templ DiscussionFormErrors(messages []string) {
 templ DiscussionCards() {
 	<section
 		id="discussion-cards"
-		class="columns-1 py-2 sm:columns-2 lg:columns-3 xl:columns-4"
 	>
 		{ children... }
 	</section>
@@ -196,6 +195,7 @@ templ DiscussionCard(discussionCardViewModel DiscussionCardViewModel, isPreview 
 		<figure>
 			<img
 				src={ discussionCardViewModel.ImgSrc }
+				loading="lazy"
 				alt="Discussion"
 				class="w-full"
 			/>
