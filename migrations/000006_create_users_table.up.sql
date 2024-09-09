@@ -6,5 +6,6 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL COLLATE case_insensitive,
   password_hash BYTEA NOT NULL,
   activated BOOLEAN NOT NULL DEFAULT FALSE,
-  version INTEGER NOT NULL DEFAULT 1
+  version INTEGER NOT NULL DEFAULT 1,
+  UNIQUE(email)
 );

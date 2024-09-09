@@ -50,6 +50,11 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 						ve.Param(),
 					),
 				)
+			case "url":
+				errs = append(
+					errs,
+					fmt.Sprintf("Invalid URL format."),
+				)
 			default:
 				errs = append(errs, ve.Error())
 			}
@@ -70,15 +75,19 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 		)
 	}
 
-	if err := app.models.Discussions.Insert(
-		&data.Discussion{
-			Title:       input.Title,
-			Url:         input.Url,
-			Description: input.Description,
-			PreviewSrc:  previewSrc,
-		},
-	); err != nil {
-		return err
+	d := &data.Discussion{
+		Title:       input.Title,
+		Url:         input.Url,
+		Description: input.Description,
+		PreviewSrc:  previewSrc,
+	}
+
+	if err := app.models.Discussions.Insert(d); err != nil {
+		return views.Render(
+			c,
+			http.StatusBadRequest,
+			components.DiscussionFormErrors([]string{err.Error()}),
+		)
 	}
 
 	c.Response().Header().Set("HX-Retarget", "#discussion-cards")

@@ -1,6 +1,19 @@
 package data
 
-import "database/sql"
+import (
+	"database/sql"
+	"time"
+)
+
+type Discussion struct {
+	ID          int
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Url         string
+	Title       string
+	Description string
+	PreviewSrc  string
+}
 
 type DiscussionModel struct {
 	DB *sql.DB

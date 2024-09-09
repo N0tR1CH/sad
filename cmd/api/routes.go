@@ -68,3 +68,10 @@ func (app *application) discussionsRoutes(e *echo.Echo) {
 	// Generating discussion card preview
 	g.GET("/preview", app.genDiscussionPreview)
 }
+
+func (app *application) usersRoutes(e *echo.Echo) {
+	g := e.Group("/users", echo.WrapMiddleware(app.sessionManager.LoadAndSave))
+	// Creating new user
+	g.GET("/new", app.newUserHandler)
+	g.POST("/create", app.createNewUserHandler)
+}

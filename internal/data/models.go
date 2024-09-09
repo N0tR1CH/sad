@@ -3,11 +3,11 @@ package data
 import (
 	"database/sql"
 	"errors"
-	"time"
 )
 
 var (
 	ErrRecordNotFound = errors.New("record not found")
+	ErrEditConflict   = errors.New("record could not be updated")
 )
 
 type Models struct {
@@ -18,20 +18,16 @@ type Models struct {
 		Update(discussion *Discussion) error
 		Delete(id int64) error
 	}
+	Users interface {
+		Insert(user *User) error
+		GetByEmail(email string) (*User, error)
+		Update(user *User) error
+	}
 }
 
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Discussions: DiscussionModel{DB: db},
+		Users:       UserModel{DB: db},
 	}
-}
-
-type Discussion struct {
-	ID          int
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Url         string
-	Title       string
-	Description string
-	PreviewSrc  string
 }
