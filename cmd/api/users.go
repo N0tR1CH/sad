@@ -1,9 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 
+	"github.com/N0tR1CH/sad/internal/data"
 	"github.com/N0tR1CH/sad/views"
 	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/go-playground/validator/v10"
@@ -33,6 +36,9 @@ func (app *application) createUserHandler(c echo.Context) error {
 }
 
 func (app *application) validateUserEmailHandler(c echo.Context) error {
+	app.sessionManager.Remove(c.Request().Context(), "usernameRight")
+	app.sessionManager.Remove(c.Request().Context(), "passwordRight")
+
 	var input struct {
 		Email string `query:"email" validate:"required,email"`
 	}
@@ -73,6 +79,32 @@ func (app *application) validateUserEmailHandler(c echo.Context) error {
 		)
 	}
 
+	_, err := app.models.Users.GetByEmail(input.Email)
+	if err != nil {
+		if errors.Is(err, data.ErrRecordNotFound) {
+			c.Response().Header().Set("HX-Push-Url", "/register")
+			return views.Render(
+				c,
+				http.StatusOK,
+				pages.LoginFormBody(
+					pages.LoginPageProps{
+						PageTitle:       "Register",
+						PageDescription: "Insert data in order to create new account.",
+						EmailFieldProps: pages.EmailFieldProps{
+							IsInputWrong: false,
+							InputValue:   input.Email,
+							ErrMsg:       errMsg,
+						},
+						Fields: pages.RegisterFields(),
+					},
+				),
+			)
+		} else {
+			c.Response().Header().Set("HX-Redirect", "/login")
+			return c.NoContent(http.StatusOK)
+		}
+	}
+
 	return views.Render(
 		c,
 		http.StatusOK,
@@ -92,6 +124,7 @@ func (app *application) validateUserEmailHandler(c echo.Context) error {
 }
 
 func (app *application) validateUserUsernameHandler(c echo.Context) error {
+	app.sessionManager.Remove(c.Request().Context(), "usernameRight")
 	var input struct {
 		Username string `query:"username" validate:"required,alphanum,min=3,max=30"`
 	}
@@ -131,21 +164,40 @@ func (app *application) validateUserUsernameHandler(c echo.Context) error {
 		)
 	}
 
+	app.sessionManager.Put(c.Request().Context(), "usernameRight", true)
+	includeSubmitButton := app.sessionManager.GetBool(
+		c.Request().Context(),
+		"passwordRight",
+	) && app.sessionManager.GetBool(
+		c.Request().Context(),
+		"usernameRight",
+	)
+
+	parsedUrl, err := url.Parse(c.Request().Header.Get("HX-Current-URL"))
+	if err != nil {
+		c.Response().Header().Set("HX-Redirect", "/login")
+		return c.NoContent(http.StatusOK)
+	}
+	submitButtonAction := parsedUrl.Path
+
 	return views.Render(
 		c,
 		http.StatusOK,
 		pages.UsernameField(
 			pages.UsernameFieldProps{
-				IsInputWrong: false,
-				InputValue:   input.Username,
+				IsInputWrong:        false,
+				InputValue:          input.Username,
+				IncludeSubmitButton: includeSubmitButton,
+				SubmitButtonAction:  submitButtonAction,
 			},
 		),
 	)
 }
 
 func (app *application) validateUserPasswordHandler(c echo.Context) error {
+	app.sessionManager.Remove(c.Request().Context(), "passwordRight")
 	var input struct {
-		Username string `query:"password" validate:"required,min=8,max=64,containsany=!@#?*,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ"`
+		Password string `query:"password" validate:"required,min=8,max=64,containsany=!@#?*,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ"`
 	}
 	if err := c.Bind(&input); err != nil {
 		return views.Render(
@@ -180,20 +232,39 @@ func (app *application) validateUserPasswordHandler(c echo.Context) error {
 			pages.PasswordField(
 				pages.PasswordFieldProps{
 					IsInputWrong: true,
-					InputValue:   input.Username,
+					InputValue:   input.Password,
 					ErrMsg:       errMsg,
 				},
 			),
 		)
 	}
 
+	app.sessionManager.Put(c.Request().Context(), "passwordRight", true)
+
+	includeSubmitButton := app.sessionManager.GetBool(
+		c.Request().Context(),
+		"passwordRight",
+	) && app.sessionManager.GetBool(
+		c.Request().Context(),
+		"usernameRight",
+	)
+
+	parsedUrl, err := url.Parse(c.Request().Header.Get("HX-Current-URL"))
+	if err != nil {
+		c.Response().Header().Set("HX-Redirect", "/login")
+		return c.NoContent(http.StatusOK)
+	}
+	submitButtonAction := parsedUrl.Path
+
 	return views.Render(
 		c,
 		http.StatusOK,
 		pages.PasswordField(
 			pages.PasswordFieldProps{
-				IsInputWrong: false,
-				InputValue:   input.Username,
+				IsInputWrong:        false,
+				InputValue:          input.Password,
+				IncludeSubmitButton: includeSubmitButton,
+				SubmitButtonAction:  submitButtonAction,
 			},
 		),
 	)
