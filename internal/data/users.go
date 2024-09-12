@@ -81,10 +81,10 @@ func (um UserModel) GetByEmail(email string) (*User, error) {
 			password_hash,
 			activated,
 			version
-		WHERE
-			email=$1
 		FROM
 			users
+		WHERE
+			email=$1
 		`,
 	)
 	if err != nil {

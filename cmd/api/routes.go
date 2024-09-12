@@ -29,7 +29,10 @@ func (app *application) routes() http.Handler {
 
 	r.GET("/", app.homeHandler, echo.WrapMiddleware(app.sessionManager.LoadAndSave))
 
+	r.GET("/login", app.loginHandler, echo.WrapMiddleware(app.sessionManager.LoadAndSave))
+
 	app.discussionsRoutes(r)
+	app.usersRoutes(r)
 
 	return r
 }
@@ -72,6 +75,10 @@ func (app *application) discussionsRoutes(e *echo.Echo) {
 func (app *application) usersRoutes(e *echo.Echo) {
 	g := e.Group("/users", echo.WrapMiddleware(app.sessionManager.LoadAndSave))
 	// Creating new user
-	g.GET("/new", app.newUserHandler)
-	g.POST("/create", app.createNewUserHandler)
+	g.POST("/create", app.createUserHandler)
+
+	// Validations for user fields
+	g.GET("/validateEmail", app.validateUserEmailHandler)
+	g.GET("/validateUsername", app.validateUserUsernameHandler)
+	g.GET("/validatePassword", app.validateUserPasswordHandler)
 }

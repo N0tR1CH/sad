@@ -1,0 +1,10 @@
+package components
+
+templ WrapAndSwap(inner templ.Component, domId string, oobValue string) {
+	<div id={ domId } hx-swap-oob={ oobValue }>
+		@inner
+	</div>
+}
+
+templ Empty() {
+}
