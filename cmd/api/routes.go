@@ -30,6 +30,9 @@ func (app *application) routes() http.Handler {
 	r.GET("/", app.homeHandler, echo.WrapMiddleware(app.sessionManager.LoadAndSave))
 
 	r.GET("/login", app.loginHandler, echo.WrapMiddleware(app.sessionManager.LoadAndSave))
+	r.GET("/register", func(c echo.Context) error {
+		return c.Redirect(http.StatusTemporaryRedirect, "/login")
+	})
 
 	app.discussionsRoutes(r)
 	app.usersRoutes(r)
