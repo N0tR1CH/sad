@@ -15,10 +15,7 @@ type LoginPageProps struct {
 templ LoginPage(props LoginPageProps) {
 	@layouts.Base() {
 		<div class="flex flex-col items-center">
-			<div
-				id="auth-form"
-				class="prose flex flex-col items-center"
-			>
+			<div id="auth-form" class="prose flex flex-col items-center">
 				@LoginFormBody(props)
 			</div>
 		</div>
@@ -39,9 +36,7 @@ templ AuthPageTitle(title string) {
 }
 
 templ AuthPageDescription(description string) {
-	<p id="auth-page-description" class="p-4">
-		{ description }
-	</p>
+	<p id="auth-page-description" class="p-4">{ description }</p>
 }
 
 type EmailFieldProps struct {
@@ -118,40 +113,11 @@ templ UsernameField(props UsernameFieldProps) {
 			hx-target="closest label"
 			hx-swap="outerHTML"
 		/>
-		if props.IsInputWrong {
+		if props.IsInputWrong || props.ErrMsg != "" {
 			@LoginErrorMessage(props.ErrMsg)
 		}
 	</label>
-	if props.IncludeSubmitButton {
-		switch props.SubmitButtonAction {
-			case "/login":
-				<button
-					id="auth-form-submit-btn"
-					class="btn btn-primary w-full m-4"
-					hx-swap-oob="true"
-					type="button"
-					hx-post="/users/login"
-				>
-					Login
-				</button>
-			case "/register":
-				<button
-					id="auth-form-submit-btn"
-					class="btn btn-primary w-full m-4"
-					hx-swap-oob="true"
-					type="button"
-					hx-post="/users/create"
-					hx-swap="innerHTML"
-				>
-					Create Account
-				</button>
-		}
-	} else {
-		<button
-			id="auth-form-submit-btn"
-			hx-swap-oob="true"
-		></button>
-	}
+	@LoginRegisterButton(props.IncludeSubmitButton, props.SubmitButtonAction)
 }
 
 type PasswordFieldProps struct {
@@ -196,8 +162,23 @@ templ PasswordField(props PasswordFieldProps) {
 			@LoginErrorMessage(props.ErrMsg)
 		}
 	</label>
-	if props.IncludeSubmitButton {
-		switch props.SubmitButtonAction {
+	@LoginRegisterButton(props.IncludeSubmitButton, props.SubmitButtonAction)
+}
+
+templ RegisterFields() {
+	@UsernameField(UsernameFieldProps{IsInputWrong: false})
+	@PasswordField(PasswordFieldProps{IsInputWrong: false})
+	<button id="auth-form-submit-btn"></button>
+}
+
+templ LoginFields() {
+	@PasswordField(PasswordFieldProps{IsInputWrong: false})
+	<button id="auth-form-submit-btn"></button>
+}
+
+templ LoginRegisterButton(shouldInclude bool, action string) {
+	if shouldInclude {
+		switch action {
 			case "/login":
 				<button
 					id="auth-form-submit-btn"
@@ -223,26 +204,8 @@ templ PasswordField(props PasswordFieldProps) {
 				</button>
 		}
 	} else {
-		<button
-			id="auth-form-submit-btn"
-			hx-swap-oob="true"
-		></button>
+		<button id="auth-form-submit-btn" hx-swap-oob="true"></button>
 	}
-}
-
-templ RegisterFields() {
-	@UsernameField(UsernameFieldProps{IsInputWrong: false})
-	@PasswordField(PasswordFieldProps{IsInputWrong: false})
-	<button
-		id="auth-form-submit-btn"
-	></button>
-}
-
-templ LoginFields() {
-	@PasswordField(PasswordFieldProps{IsInputWrong: false})
-	<button
-		id="auth-form-submit-btn"
-	></button>
 }
 
 templ LoginErrorMessage(message string) {
