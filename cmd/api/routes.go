@@ -75,13 +75,29 @@ func (app *application) discussionsRoutes(e *echo.Echo) {
 	g.GET("/preview", app.genDiscussionPreview)
 }
 
+// Create users group and sets its middleware.
+//
+// It has two parameters: a pointer to application instance with pointer to echo instace.
+// usersRoutes function create new group with the route and sets some middleware.
+// On the created group it sets handlers.
+//
+// /users/*
 func (app *application) usersRoutes(e *echo.Echo) {
 	g := e.Group("/users", echo.WrapMiddleware(app.sessionManager.LoadAndSave))
-	// Creating new user
+
+	// POST /users/create
 	g.POST("/create", app.createUserHandler)
 
-	// Validations for user fields
+	// START OF Validations for user fields**************************************
+
+	// GET /users/validateEmail?email=[string]
 	g.GET("/validateEmail", app.validateUserEmailHandler)
+
+	// GET /users/validateUsername?username=[string]
 	g.GET("/validateUsername", app.validateUserUsernameHandler)
+
+	// GET /users/validatePassword?password=[string]
 	g.GET("/validatePassword", app.validateUserPasswordHandler)
+
+	// END OF Validations for user fields****************************************
 }

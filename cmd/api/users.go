@@ -79,45 +79,40 @@ func (app *application) validateUserEmailHandler(c echo.Context) error {
 		)
 	}
 
-	_, err := app.models.Users.GetByEmail(input.Email)
-	if err != nil {
-		if errors.Is(err, data.ErrRecordNotFound) {
-			c.Response().Header().Set("HX-Push-Url", "/register")
-			return views.Render(
-				c,
-				http.StatusOK,
-				pages.LoginFormBody(
-					pages.LoginPageProps{
-						PageTitle:       "Register",
-						PageDescription: "Insert data in order to create new account.",
-						EmailFieldProps: pages.EmailFieldProps{
-							IsInputWrong: false,
-							InputValue:   input.Email,
-							ErrMsg:       errMsg,
-						},
-						Fields: pages.RegisterFields(),
+	if _, err := app.models.Users.GetByEmail(input.Email); err != nil && errors.Is(err, data.ErrRecordNotFound) {
+		c.Response().Header().Set("HX-Push-Url", "/register")
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.LoginFormBody(
+				pages.LoginPageProps{
+					PageTitle:       "Register",
+					PageDescription: "Insert data in order to create new account.",
+					EmailFieldProps: pages.EmailFieldProps{
+						IsInputWrong: false,
+						InputValue:   input.Email,
+						ErrMsg:       errMsg,
 					},
-				),
-			)
-		} else {
-			c.Response().Header().Set("HX-Redirect", "/login")
-			return c.NoContent(http.StatusOK)
-		}
+					Fields: pages.RegisterFields(),
+				},
+			),
+		)
 	}
+	c.Response().Header().Set("HX-Push-Url", "/login")
 
 	return views.Render(
 		c,
 		http.StatusOK,
 		pages.LoginFormBody(
 			pages.LoginPageProps{
-				PageTitle:       "Register",
-				PageDescription: "Insert data in order to create new account.",
+				PageTitle:       "Login",
+				PageDescription: "Insert data in order sign in.",
 				EmailFieldProps: pages.EmailFieldProps{
 					IsInputWrong: false,
 					InputValue:   input.Email,
 					ErrMsg:       errMsg,
 				},
-				Fields: pages.RegisterFields(),
+				Fields: pages.LoginFields(),
 			},
 		),
 	)
@@ -165,14 +160,6 @@ func (app *application) validateUserUsernameHandler(c echo.Context) error {
 	}
 
 	app.sessionManager.Put(c.Request().Context(), "usernameRight", true)
-	includeSubmitButton := app.sessionManager.GetBool(
-		c.Request().Context(),
-		"passwordRight",
-	) && app.sessionManager.GetBool(
-		c.Request().Context(),
-		"usernameRight",
-	)
-
 	parsedUrl, err := url.Parse(c.Request().Header.Get("HX-Current-URL"))
 	if err != nil {
 		c.Response().Header().Set("HX-Redirect", "/login")
@@ -185,10 +172,18 @@ func (app *application) validateUserUsernameHandler(c echo.Context) error {
 		http.StatusOK,
 		pages.UsernameField(
 			pages.UsernameFieldProps{
-				IsInputWrong:        false,
-				InputValue:          input.Username,
-				IncludeSubmitButton: includeSubmitButton,
-				SubmitButtonAction:  submitButtonAction,
+				IsInputWrong: false,
+				InputValue:   input.Username,
+				IncludeSubmitButton: func() bool {
+					return app.sessionManager.GetBool(
+						c.Request().Context(),
+						"passwordRight",
+					) && app.sessionManager.GetBool(
+						c.Request().Context(),
+						"usernameRight",
+					)
+				}(),
+				SubmitButtonAction: submitButtonAction,
 			},
 		),
 	)
@@ -197,7 +192,7 @@ func (app *application) validateUserUsernameHandler(c echo.Context) error {
 func (app *application) validateUserPasswordHandler(c echo.Context) error {
 	app.sessionManager.Remove(c.Request().Context(), "passwordRight")
 	var input struct {
-		Password string `query:"password" validate:"required,min=8,max=64,containsany=!@#?*,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ"`
+		Password string `query:"password" validate:"required,min=8,max=64,containsany=!@#?*,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=123456789"`
 	}
 	if err := c.Bind(&input); err != nil {
 		return views.Render(
@@ -220,10 +215,16 @@ func (app *application) validateUserPasswordHandler(c echo.Context) error {
 			maxNumOfChars := vErr.Param()
 			errMsg = fmt.Sprintf("Field maximum length is %s.", maxNumOfChars)
 		case "containsany":
-			if vErr.Param() == "!@#?*" {
-				errMsg = fmt.Sprintf("Field must contain any of these characters: \"%s\".", vErr.Param())
-			} else {
+			switch vErr.Param() {
+			case "!@#?*":
+				errMsg = fmt.Sprintf(
+					"Field must contain any of these characters: \"%s\".",
+					vErr.Param(),
+				)
+			case "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
 				errMsg = "Field must contain atleast one big letter."
+			case "123456789":
+				errMsg = "Field must contain atleast one digit."
 			}
 		}
 		return views.Render(
@@ -240,15 +241,6 @@ func (app *application) validateUserPasswordHandler(c echo.Context) error {
 	}
 
 	app.sessionManager.Put(c.Request().Context(), "passwordRight", true)
-
-	includeSubmitButton := app.sessionManager.GetBool(
-		c.Request().Context(),
-		"passwordRight",
-	) && app.sessionManager.GetBool(
-		c.Request().Context(),
-		"usernameRight",
-	)
-
 	parsedUrl, err := url.Parse(c.Request().Header.Get("HX-Current-URL"))
 	if err != nil {
 		c.Response().Header().Set("HX-Redirect", "/login")
@@ -261,10 +253,25 @@ func (app *application) validateUserPasswordHandler(c echo.Context) error {
 		http.StatusOK,
 		pages.PasswordField(
 			pages.PasswordFieldProps{
-				IsInputWrong:        false,
-				InputValue:          input.Password,
-				IncludeSubmitButton: includeSubmitButton,
-				SubmitButtonAction:  submitButtonAction,
+				IsInputWrong: false,
+				InputValue:   input.Password,
+				IncludeSubmitButton: func() bool {
+					switch submitButtonAction {
+					case "/login":
+						return true
+					case "/register":
+						return app.sessionManager.GetBool(
+							c.Request().Context(),
+							"passwordRight",
+						) && app.sessionManager.GetBool(
+							c.Request().Context(),
+							"usernameRight",
+						)
+					default:
+						return false
+					}
+				}(),
+				SubmitButtonAction: submitButtonAction,
 			},
 		),
 	)

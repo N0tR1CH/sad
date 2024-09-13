@@ -129,6 +129,8 @@ templ UsernameField(props UsernameFieldProps) {
 					id="auth-form-submit-btn"
 					class="btn btn-primary w-full m-4"
 					hx-swap-oob="true"
+					type="button"
+					hx-post="/users/login"
 				>
 					Login
 				</button>
@@ -137,6 +139,8 @@ templ UsernameField(props UsernameFieldProps) {
 					id="auth-form-submit-btn"
 					class="btn btn-primary w-full m-4"
 					hx-swap-oob="true"
+					type="button"
+					hx-post="/users/create"
 				>
 					Create Account
 				</button>
@@ -198,6 +202,8 @@ templ PasswordField(props PasswordFieldProps) {
 					id="auth-form-submit-btn"
 					class="btn btn-primary w-full m-4"
 					hx-swap-oob="true"
+					type="button"
+					hx-post="/users/login"
 				>
 					Login
 				</button>
@@ -206,6 +212,8 @@ templ PasswordField(props PasswordFieldProps) {
 					id="auth-form-submit-btn"
 					class="btn btn-primary w-full m-4"
 					hx-swap-oob="true"
+					type="button"
+					hx-post="/users/create"
 				>
 					Create Account
 				</button>
@@ -220,6 +228,13 @@ templ PasswordField(props PasswordFieldProps) {
 
 templ RegisterFields() {
 	@UsernameField(UsernameFieldProps{IsInputWrong: false})
+	@PasswordField(PasswordFieldProps{IsInputWrong: false})
+	<button
+		id="auth-form-submit-btn"
+	></button>
+}
+
+templ LoginFields() {
 	@PasswordField(PasswordFieldProps{IsInputWrong: false})
 	<button
 		id="auth-form-submit-btn"
