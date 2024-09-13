@@ -32,7 +32,97 @@ func (app *application) loginHandler(c echo.Context) error {
 }
 
 func (app *application) createUserHandler(c echo.Context) error {
-	return nil
+	app.sessionManager.Remove(c.Request().Context(), "usernameRight")
+	app.sessionManager.Remove(c.Request().Context(), "passwordRight")
+
+	var input struct {
+		Email    string `form:"email" validate:"required,email"`
+		Username string `form:"username" validate:"required,alphanum,min=3,max=30"`
+		Password string `form:"password" validate:"required,min=8,max=64,containsany=!@#?*,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=123456789"`
+	}
+
+	if err := c.Bind(&input); err != nil {
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.LoginFormBody(
+				pages.LoginPageProps{
+					PageTitle:       "Auth Page",
+					PageDescription: "Provide your email and we will redirect you to correct action.",
+					EmailFieldProps: pages.EmailFieldProps{
+						IsInputWrong: false,
+						InputValue:   input.Email,
+						ErrMsg:       "Values could not be bind.",
+					},
+					Fields: nil,
+				},
+			),
+		)
+	}
+
+	if err := c.Validate(&input); err != nil {
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.LoginFormBody(
+				pages.LoginPageProps{
+					PageTitle:       "Auth Page",
+					PageDescription: "Provide your email and we will redirect you to correct action.",
+					EmailFieldProps: pages.EmailFieldProps{
+						IsInputWrong: false,
+						InputValue:   input.Email,
+						ErrMsg:       "Values could not be validated.",
+					},
+					Fields: nil,
+				},
+			),
+		)
+	}
+
+	u := &data.User{
+		Email:     input.Email,
+		Name:      input.Username,
+		Activated: false,
+	}
+	if err := u.Password.Set(input.Password); err != nil {
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.LoginFormBody(
+				pages.LoginPageProps{
+					PageTitle:       "Auth Page",
+					PageDescription: "Provide your email and we will redirect you to correct action.",
+					EmailFieldProps: pages.EmailFieldProps{
+						IsInputWrong: false,
+						InputValue:   input.Email,
+						ErrMsg:       "Password could not be set.",
+					},
+					Fields: nil,
+				},
+			),
+		)
+	}
+
+	if err := app.models.Users.Insert(u); err != nil {
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.LoginFormBody(
+				pages.LoginPageProps{
+					PageTitle:       "Auth Page",
+					PageDescription: "Provide your email and we will redirect you to correct action.",
+					EmailFieldProps: pages.EmailFieldProps{
+						IsInputWrong: false,
+						InputValue:   input.Email,
+						ErrMsg:       "User could not be created.",
+					},
+					Fields: nil,
+				},
+			),
+		)
+	}
+
+	return c.String(http.StatusOK, "good")
 }
 
 func (app *application) validateUserEmailHandler(c echo.Context) error {

@@ -15,12 +15,12 @@ type LoginPageProps struct {
 templ LoginPage(props LoginPageProps) {
 	@layouts.Base() {
 		<div class="flex flex-col items-center">
-			<form
+			<div
 				id="auth-form"
 				class="prose flex flex-col items-center"
 			>
 				@LoginFormBody(props)
-			</form>
+			</div>
 		</div>
 	}
 }
@@ -74,10 +74,10 @@ templ EmailField(props EmailFieldProps) {
 			}
 			hx-trigger="change, keyup delay:500ms changed"
 			hx-get="/users/validateEmail"
-			hx-target="closest form"
+			hx-target="#auth-form"
 			hx-swap="innerHTML"
 		/>
-		if props.IsInputWrong {
+		if props.IsInputWrong || props.ErrMsg != "" {
 			@LoginErrorMessage(props.ErrMsg)
 		}
 	</label>
@@ -141,6 +141,7 @@ templ UsernameField(props UsernameFieldProps) {
 					hx-swap-oob="true"
 					type="button"
 					hx-post="/users/create"
+					hx-swap="innerHTML"
 				>
 					Create Account
 				</button>
@@ -191,7 +192,7 @@ templ PasswordField(props PasswordFieldProps) {
 			hx-target="closest label"
 			hx-swap="outerHTML"
 		/>
-		if props.IsInputWrong {
+		if props.IsInputWrong || props.ErrMsg != "" {
 			@LoginErrorMessage(props.ErrMsg)
 		}
 	</label>
@@ -214,6 +215,9 @@ templ PasswordField(props PasswordFieldProps) {
 					hx-swap-oob="true"
 					type="button"
 					hx-post="/users/create"
+					hx-target="#auth-form"
+					hx-swap="innerHTML"
+					hx-include="#auth-form"
 				>
 					Create Account
 				</button>

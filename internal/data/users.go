@@ -164,7 +164,7 @@ func (um UserModel) Update(user *User) error {
 }
 
 type password struct {
-	plaintest *string
+	plaintext *string
 	hash      []byte
 }
 
@@ -176,10 +176,8 @@ func (p *password) Set(clearPassword string) error {
 	if err != nil {
 		return err
 	}
-	p = &password{
-		plaintest: &clearPassword,
-		hash:      hash,
-	}
+	p.plaintext = &clearPassword
+	p.hash = hash
 	return nil
 }
 
