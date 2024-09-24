@@ -247,3 +247,15 @@ templ LoginErrorMessage(message string) {
 		<span class="text-wrap">{ message }</span>
 	</div>
 }
+
+templ SuccessfulAlert() {
+	<script type="module">
+      (() => {
+        Swal.fire({
+          title: "Good job!",
+          text: "We have sent email for account activation.",
+          icon: "success"
+        });
+      })()
+  </script>
+}

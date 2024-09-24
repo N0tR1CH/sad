@@ -175,8 +175,15 @@ templ DiscussionFormErrors(messages []string) {
 }
 
 templ DiscussionCards() {
+	<div class="flex center justify-center py-4 md:py-8 flex-wrap gap-x-2">
+		<button class="btn btn-outline">Popular</button>
+		<button class="btn">Gaming</button>
+		<button class="btn">Sport</button>
+		<button class="btn">Beauty</button>
+	</div>
 	<section
 		id="discussion-cards"
+		class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4"
 	>
 		{ children... }
 	</section>
@@ -189,7 +196,7 @@ type DiscussionCardViewModel struct {
 
 templ DiscussionCard(discussionCardViewModel DiscussionCardViewModel, isPreview bool) {
 	<div
-		class={ "card card-compact bg-base-100 w-72 shadow-xl mx-auto break-inside-avoid-column",
+		class={ "card card-compact bg-base-100 max-w-full shadow-xl mx-auto break-inside-avoid-column",
       templ.KV("pointer-events-none select-none", isPreview) }
 	>
 		<figure>

@@ -16,6 +16,7 @@ require (
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/shareed2k/go_limiter v0.0.9-0.20240229131048-52afdeaae893
+	github.com/wneessen/go-mail v0.4.4
 	golang.org/x/crypto v0.27.0
 )
 

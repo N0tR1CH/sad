@@ -10,9 +10,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 
 	"github.com/N0tR1CH/sad/internal/data"
+	"github.com/N0tR1CH/sad/internal/mailer"
 	"github.com/N0tR1CH/sad/internal/services"
 	"github.com/alexedwards/scs/pgxstore"
 	"github.com/alexedwards/scs/v2"
@@ -38,6 +40,13 @@ type config struct {
 		maxIdleConns int
 		maxIdleTime  string
 	}
+	smtp struct {
+		host     string
+		port     int
+		username string
+		password string
+		sender   string
+	}
 }
 
 type application struct {
@@ -46,23 +55,37 @@ type application struct {
 	models         data.Models
 	services       services.Services
 	sessionManager *scs.SessionManager
+	mailer         mailer.Mailer
+	wg             sync.WaitGroup
 }
 
 func newConfig() *config {
 	cfg := &config{}
+
+	// Port on which server starts
 	flag.IntVar(&cfg.port, "port", 4000, "WEBAPP server port")
+
+	// Environment type
+	//
+	// Cors configuration depend on it
 	flag.StringVar(
 		&cfg.env,
 		"env",
 		"development",
 		"Environment (development|staging|production)",
 	)
+
+	// Filesystem type
+	//
+	// Static files depend on it
 	flag.BoolVar(
 		&cfg.useOsFs,
 		"useOsFs",
 		false,
 		"Choose between embed fs or live fs",
 	)
+
+	// Database configuration
 	flag.StringVar(
 		&cfg.db.dsn,
 		"db-dsn",
@@ -87,6 +110,48 @@ func newConfig() *config {
 		"15m",
 		"PostgreSQL max connection idle time",
 	)
+
+	// Mailer configuration
+	flag.StringVar(
+		&cfg.smtp.host,
+		"smtp-host",
+		"127.0.0.1",
+		`Mail server host:
+			- For mailcrab it is localhost -> 127.0.0.1`,
+	)
+
+	flag.IntVar(
+		&cfg.smtp.port,
+		"smtp-port",
+		1025,
+		`Mail server port:
+			- For mailcrab it is 1025`,
+	)
+
+	flag.StringVar(
+		&cfg.smtp.username,
+		"smtp-username",
+		"Sadman",
+		`Mail server host:
+			- For mailcrab any is accepted`,
+	)
+
+	flag.StringVar(
+		&cfg.smtp.password,
+		"smtp-password",
+		"Sadman",
+		`Mail server host:
+			- For mailcrab any is accepted`,
+	)
+
+	flag.StringVar(
+		&cfg.smtp.sender,
+		"smtp-sender",
+		"Sad@sad.dev",
+		`Mail server sender:
+			- For mailcrab any is accepted`,
+	)
+
 	flag.Parse()
 
 	return cfg
@@ -98,8 +163,17 @@ func newApplication(
 	models data.Models,
 	services services.Services,
 	sessionManager *scs.SessionManager,
+	mailer mailer.Mailer,
 ) *application {
-	return &application{cfg, logger, models, services, sessionManager}
+	return &application{
+		cfg,
+		logger,
+		models,
+		services,
+		sessionManager,
+		mailer,
+		sync.WaitGroup{},
+	}
 }
 
 func newLogger() *slog.Logger {
@@ -150,6 +224,7 @@ func main() {
 	cfg := newConfig()
 	logger := newLogger()
 
+	// Database connection
 	db, err := openDB(cfg)
 	if err != nil {
 		logger.Error("database problem", "err", err)
@@ -162,42 +237,34 @@ func main() {
 		fmt.Sprintf("%+v", db.Stats()),
 	)
 
+	// Database connection for session manager
 	pool, err := pgxpool.New(context.Background(), cfg.db.dsn)
 	if err != nil {
 		logger.Error("database problem", "err", err)
 		os.Exit(exitFailure)
 	}
 	defer pool.Close()
+	logger.Info(
+		"database connection for session manager opened",
+		"dbStats",
+		fmt.Sprintf("%+v", pool.Stat()),
+	)
 
-	app := newApplication(
+	newApplication(
 		cfg,
 		logger,
 		data.NewModels(db),
 		services.NewServices(logger),
 		newSessionManager(pool),
-	)
-	srv := newServer(cfg.port, app.routes())
-
-	logger.Info("server started", "env", cfg.env, "address", srv.Addr)
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-	go func() {
-		if err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem"); err != nil &&
-			err != http.ErrServerClosed {
-
-			logger.Error("closing server...", "error", err.Error())
-			os.Exit(exitFailure)
-		}
-	}()
-
-	<-ctx.Done()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	logger.Info("Server Timeout", "Info", "Killing server in 10 seconds")
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		logger.Error("Error when server shutdown", "Error", err.Error())
-	}
+		mailer.New(
+			cfg.smtp.host,
+			cfg.smtp.port,
+			cfg.smtp.username,
+			cfg.smtp.password,
+			cfg.smtp.sender,
+			cfg.env,
+		),
+	).serve()
 }
 
 func openDB(cfg *config) (*sql.DB, error) {
@@ -223,4 +290,33 @@ func openDB(cfg *config) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func (app *application) serve() {
+	srv := newServer(app.config.port, app.routes())
+	app.logger.Info("server started", "env", app.config.env, "address", srv.Addr)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	go func() {
+		if err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem"); err != nil &&
+			err != http.ErrServerClosed {
+
+			app.logger.Error("closing server...", "error", err.Error())
+			os.Exit(exitFailure)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
+	<-ctx.Done()
+
+	// Wait for background job to be finished
+	app.wg.Wait()
+
+	app.logger.Info("Server Timeout", "Info", "Killing server in 10 seconds")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		app.logger.Error("Error when server shutdown", "Error", err.Error())
+	}
 }

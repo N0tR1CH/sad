@@ -7,7 +7,9 @@ import (
 	"net/url"
 
 	"github.com/N0tR1CH/sad/internal/data"
+	"github.com/N0tR1CH/sad/internal/mailer"
 	"github.com/N0tR1CH/sad/views"
+	"github.com/N0tR1CH/sad/views/components"
 	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -122,7 +124,57 @@ func (app *application) createUserHandler(c echo.Context) error {
 		)
 	}
 
-	return c.String(http.StatusOK, "good")
+	c.Response().Header().Set("HX-Push-Url", "/")
+	c.Response().Header().Set("HX-Retarget", "#app-main-container")
+	c.Response().Header().Set("HX-Reswap", "innerHTML")
+	discussions, err := app.models.Discussions.GetAll()
+	if err != nil {
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.LoginFormBody(
+				pages.LoginPageProps{
+					PageTitle:       "Auth Page",
+					PageDescription: "Provide your email and we will redirect you to correct action.",
+					EmailFieldProps: pages.EmailFieldProps{
+						IsInputWrong: false,
+						InputValue:   input.Email,
+						ErrMsg:       "Problem with our service.",
+					},
+					Fields: nil,
+				},
+			),
+		)
+	}
+
+	app.startBackgroundJob(func() {
+		if err := app.mailer.Send(
+			u.Email,
+			mailer.MailSubject(),
+			mailer.PlainBody(u.ID),
+			mailer.HtmlBody(u.ID),
+		); err != nil {
+			app.logger.Info("user#create", "Err", err.Error())
+		}
+	})
+
+	views.Render(
+		c,
+		http.StatusOK,
+		components.WrapAndSwap(
+			pages.SuccessfulAlert(),
+			"",
+			"afterbegin:#app-main-container",
+		),
+	)
+
+	return views.Render(
+		c,
+		http.StatusOK,
+		pages.HomeBody(
+			pages.NewHomeViewModel(discussions),
+		),
+	)
 }
 
 func (app *application) validateUserEmailHandler(c echo.Context) error {

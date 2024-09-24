@@ -28,18 +28,22 @@ func NewHomeViewModel(discussions []data.Discussion) HomeViewModel {
 
 templ Home(hvm HomeViewModel) {
 	@layouts.Base() {
-		@components.Logo()
-		@components.UrlShare()
-		@components.DiscussionCards() {
-			for _, dcvm := range hvm.discussionCardViewModels {
-				@components.DiscussionCard(
-					components.DiscussionCardViewModel{
-						ImgSrc:    dcvm.ImgSrc,
-						CardTitle: dcvm.CardTitle,
-					},
-					false,
-				)
-			}
+		@HomeBody(hvm)
+	}
+}
+
+templ HomeBody(hvm HomeViewModel) {
+	@components.Logo()
+	@components.UrlShare()
+	@components.DiscussionCards() {
+		for _, dcvm := range hvm.discussionCardViewModels {
+			@components.DiscussionCard(
+				components.DiscussionCardViewModel{
+					ImgSrc:    dcvm.ImgSrc,
+					CardTitle: dcvm.CardTitle,
+				},
+				false,
+			)
 		}
 	}
 }

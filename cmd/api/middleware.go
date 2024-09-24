@@ -53,10 +53,22 @@ var (
 		}
 	}
 
-	corsConfig = func(port int) middleware.CORSConfig {
+	corsConfig = func(appConfig *config) middleware.CORSConfig {
 		return middleware.CORSConfig{
 			AllowOrigins: []string{
-				fmt.Sprintf("http://localhost:%d", port),
+				// TODO: Handle cors urls
+				func() string {
+					if appConfig.env == "development" {
+						return fmt.Sprintf("https://localhost:%d", appConfig.port)
+					}
+
+					return fmt.Sprintf("https://localhost:%d", appConfig.port)
+				}(),
+			},
+			AllowHeaders: []string{
+				echo.HeaderOrigin,
+				echo.HeaderContentType,
+				echo.HeaderAccept,
 			},
 			AllowMethods: []string{
 				http.MethodGet,
@@ -91,7 +103,7 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Pre(middleware.RemoveTrailingSlashWithConfig(trailingSlashConfig))
 	e.Use(middleware.RequestLoggerWithConfig(requestLoggerConfig(app.logger)))
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORSWithConfig(corsConfig(app.config.port)))
+	e.Use(middleware.CORSWithConfig(corsConfig(app.config)))
 	e.Use(rate_limiter.NewWithConfig(rateLimiterConfig()))
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return views.Render(c, http.StatusNotFound, pages.Page404())
