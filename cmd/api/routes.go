@@ -41,17 +41,10 @@ func (app *application) routes() http.Handler {
 }
 
 func (app *application) homeHandler(c echo.Context) error {
-	discussions, err := app.models.Discussions.GetAll()
-	if err != nil {
-		return err
-	}
-
 	return views.Render(
 		c,
 		http.StatusOK,
-		pages.Home(
-			pages.NewHomeViewModel(discussions),
-		),
+		pages.Home(),
 	)
 }
 
@@ -64,6 +57,8 @@ func (app *application) staticFilesHandler() http.Handler {
 
 func (app *application) discussionsRoutes(e *echo.Echo) {
 	g := e.Group("/discussions", echo.WrapMiddleware(app.sessionManager.LoadAndSave))
+	// Getting all discussions
+	g.GET("", app.getDiscussionsHandler)
 	// Creating new discussion
 	g.GET("/new", app.newDiscussionHandler)
 	g.POST("/create", app.createDiscussionHandler)

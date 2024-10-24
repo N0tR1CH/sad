@@ -14,11 +14,33 @@ import (
 
 func (app *application) newDiscussionHandler(c echo.Context) error {
 	url := c.QueryParam("url")
-	_, HTMX := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]
-	if HTMX {
+	if _, HTMX := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]; HTMX {
 		return views.Render(c, http.StatusOK, components.DiscussionForm(url))
 	}
 	return views.Render(c, http.StatusOK, pages.NewDiscussionPage(url))
+}
+
+func (app *application) getDiscussionsHandler(c echo.Context) error {
+	discussions, err := app.models.Discussions.GetAll()
+	if err != nil {
+		return c.String(
+			http.StatusInternalServerError,
+			"Couldn't retrieve discussions from the server!",
+		)
+	}
+
+	dcvms := make([]components.DiscussionCardViewModel, len(discussions))
+	for i := 0; i < len(discussions); i++ {
+		dcvms[i] = components.DiscussionCardViewModel{
+			ImgSrc:    discussions[i].PreviewSrc,
+			CardTitle: discussions[i].Title,
+		}
+	}
+
+	if _, HTMX := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]; HTMX {
+		return views.Render(c, http.StatusOK, components.DiscussionCards(dcvms))
+	}
+	return c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
 func (app *application) createDiscussionHandler(c echo.Context) error {

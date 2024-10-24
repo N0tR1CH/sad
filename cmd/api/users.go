@@ -170,7 +170,6 @@ func (app *application) createUserHandler(c echo.Context) error {
 			"afterbegin:#app-main-container",
 		),
 	)
-	discussions, err := app.models.Discussions.GetAll()
 	if err != nil {
 		return views.Render(
 			c,
@@ -196,9 +195,7 @@ func (app *application) createUserHandler(c echo.Context) error {
 	return views.Render(
 		c,
 		http.StatusOK,
-		pages.HomeBody(
-			pages.NewHomeViewModel(discussions),
-		),
+		pages.HomeBody(),
 	)
 }
 
