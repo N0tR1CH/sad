@@ -27,13 +27,11 @@ tasks:
   watch:
     deps: [kill-watch]
     summary: |
-      It runs air watcher
-
-      Air watcher rebuild app and run it when files declared in air config changes.
+      It runs overmind process manager
     cmds:
       - cmd: echo "Hot reloading starting..."
         silent: true
-      - air
+      - overmind s -f ./Procfile.dev
 
   kill-watch:
     summary: |

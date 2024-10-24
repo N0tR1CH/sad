@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/N0tR1CH/sad/internal/data"
 	"github.com/N0tR1CH/sad/internal/mailer"
@@ -124,9 +125,51 @@ func (app *application) createUserHandler(c echo.Context) error {
 		)
 	}
 
-	c.Response().Header().Set("HX-Push-Url", "/")
-	c.Response().Header().Set("HX-Retarget", "#app-main-container")
-	c.Response().Header().Set("HX-Reswap", "innerHTML")
+	t, err := app.models.Tokens.New(
+		u.ID,
+		24*time.Hour,
+		data.TokenType(data.TokenTypeActivation),
+	)
+	if err != nil {
+		app.logger.Error("TokenGeneration", "error", err.Error())
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.LoginFormBody(
+				pages.LoginPageProps{
+					PageTitle:       "Auth Page",
+					PageDescription: "Provide your email and we will redirect you to correct action.",
+					EmailFieldProps: pages.EmailFieldProps{
+						IsInputWrong: false,
+						InputValue:   input.Email,
+						ErrMsg:       "Could not generate token. We're sorry. Try Again.",
+					},
+					Fields: nil,
+				},
+			),
+		)
+	}
+
+	app.startBackgroundJob(func() {
+		if err := app.mailer.Send(
+			u.Email,
+			mailer.MailSubject(),
+			mailer.PlainBody(u.ID, t.PlainText),
+			mailer.HtmlBody(u.ID, t.PlainText),
+		); err != nil {
+			app.logger.Info("user#create", "Err", err.Error())
+		}
+	})
+
+	views.Render(
+		c,
+		http.StatusOK,
+		components.WrapAndSwap(
+			pages.SuccessfulAlert(),
+			"",
+			"afterbegin:#app-main-container",
+		),
+	)
 	discussions, err := app.models.Discussions.GetAll()
 	if err != nil {
 		return views.Render(
@@ -146,27 +189,9 @@ func (app *application) createUserHandler(c echo.Context) error {
 			),
 		)
 	}
-
-	app.startBackgroundJob(func() {
-		if err := app.mailer.Send(
-			u.Email,
-			mailer.MailSubject(),
-			mailer.PlainBody(u.ID),
-			mailer.HtmlBody(u.ID),
-		); err != nil {
-			app.logger.Info("user#create", "Err", err.Error())
-		}
-	})
-
-	views.Render(
-		c,
-		http.StatusOK,
-		components.WrapAndSwap(
-			pages.SuccessfulAlert(),
-			"",
-			"afterbegin:#app-main-container",
-		),
-	)
+	c.Response().Header().Set("HX-Push-Url", "/")
+	c.Response().Header().Set("HX-Retarget", "#app-main-container")
+	c.Response().Header().Set("HX-Reswap", "innerHTML")
 
 	return views.Render(
 		c,

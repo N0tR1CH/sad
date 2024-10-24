@@ -88,8 +88,6 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	// POST /users/create
 	g.POST("/create", app.createUserHandler)
 
-	// START OF Validations for user fields**************************************
-
 	// GET /users/validateEmail?email=[string]
 	g.GET("/validateEmail", app.validateUserEmailHandler)
 
@@ -99,5 +97,12 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	// GET /users/validatePassword?password=[string]
 	g.GET("/validatePassword", app.validateUserPasswordHandler)
 
-	// END OF Validations for user fields****************************************
+	// GET /users/validatePassword?password=[string]
+	g.GET("/validatePassword", app.validateUserPasswordHandler)
+
+	// GET /users/activated/:id/activated?token=[string]
+	g.GET("/users/:id/activated", nil /* app.getUserActivationSectionHandler */)
+
+	// PUT /users/activated/:id/activated?token=[string]
+	g.PUT("/users/:id/activated", nil /* app.updateUserActivationStatusHandler */)
 }

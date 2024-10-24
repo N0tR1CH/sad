@@ -3,6 +3,7 @@ package data
 import (
 	"database/sql"
 	"errors"
+	"time"
 )
 
 var (
@@ -23,11 +24,17 @@ type Models struct {
 		GetByEmail(email string) (*User, error)
 		Update(user *User) error
 	}
+	Tokens interface {
+		New(userID int, lifeTime time.Duration, tokenType TokenType) (*Token, error)
+		Insert(t *Token) error
+		DeleteAllForUser(userID int) error
+	}
 }
 
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Discussions: DiscussionModel{DB: db},
 		Users:       UserModel{DB: db},
+		Tokens:      TokenModel{DB: db},
 	}
 }
