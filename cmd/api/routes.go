@@ -92,9 +92,6 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	// GET /users/validatePassword?password=[string]
 	g.GET("/validatePassword", app.validateUserPasswordHandler)
 
-	// GET /users/validatePassword?password=[string]
-	g.GET("/validatePassword", app.validateUserPasswordHandler)
-
 	// GET /users/activated/:id/activated?token=[string]
 	g.GET("/users/:id/activated", nil /* app.getUserActivationSectionHandler */)
 
