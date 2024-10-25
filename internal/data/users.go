@@ -116,6 +116,15 @@ func (um UserModel) GetByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
+func (um UserModel) EligibleToActivate(id int, token string) (bool, error) {
+	var exists bool
+	q := "SELECT EXISTS(SELECT id FROM users WHERE id = $1)"
+	if err := um.DB.QueryRow(q, id).Scan(&exists); err != nil {
+		return false, fmt.Errorf("UserExists %d: such user does not exist", id)
+	}
+	return exists, nil
+}
+
 func (um UserModel) Update(user *User) error {
 	ctx := context.Background()
 	stmt, err := um.DB.PrepareContext(

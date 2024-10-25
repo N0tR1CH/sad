@@ -6,13 +6,12 @@ templ MailSubject() {
 	Welcome to SAD!
 }
 
+// TODO: Remember to change address for valid one
 templ PlainBody(userId int, plainTextToken string) {
 	{ fmt.Sprintf(`
       Hi,
 
       Thanks for signing up for a Share and Discuss account. We're excited to have you on board!
-
-      For future reference, your user ID number is %d
 
       Activate your account by visiting link below!
 
@@ -21,11 +20,11 @@ templ PlainBody(userId int, plainTextToken string) {
       Thanks,
 
       Share and Dicuss Team`,
-      userId,
-      fmt.Sprintf("/users/%d/activated?token=%s", userId, plainTextToken),
+      fmt.Sprintf("https://localhost:4000/users/%d/activated?token=%s", userId, plainTextToken),
     ) }
 }
 
+// TODO: Remember to change address for valid one
 templ HtmlBody(userId int, plainTextToken string) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -38,7 +37,9 @@ templ HtmlBody(userId int, plainTextToken string) {
 			<p>Thanks for signing up for a Share and Discuss account. We're excited to have you on board!</p>
 			<p>For future reference, your user ID number is { fmt.Sprintf("%d", userId) }</p>
 			<p>Activate your account by visiting link below!</p>
-			<a href={ templ.URL(fmt.Sprintf("/users/%d/activated?token=%s", userId, plainTextToken)) }>ACTIVATE</a>
+			<a href={ templ.URL(fmt.Sprintf("https://localhost:4000/users/%d/activated?token=%s======", userId, plainTextToken)) }>
+				ACTIVATE
+			</a>
 			<p>Thanks,</p>
 			<p>Share and Discuss Team</p>
 		</body>

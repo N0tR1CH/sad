@@ -440,3 +440,36 @@ func (app *application) validateUserPasswordHandler(c echo.Context) error {
 		),
 	)
 }
+
+func (app *application) getUserActivationSectionHandler(c echo.Context) error {
+	var input struct {
+		Id    string `param:"id" validate:"required,number"`
+		Token string `query:"token" validate:"required,len=32,base32"`
+	}
+
+	if err := c.Bind(&input); err != nil {
+		app.logger.Error(
+			"app#getUserActivationSectionHandler - Values could no be binded",
+			"Err",
+			err.Error(),
+		)
+		return c.String(http.StatusOK, "Problem handling the request")
+	}
+	if err := c.Validate(&input); err != nil {
+		app.logger.Error(
+			"app#getUserActivationSectionHandler - Values could no be binded",
+			"Err",
+			err.Error(),
+		)
+		return c.String(
+			http.StatusOK,
+			"There was a problem with validating the parameters, please visit link from the email again.",
+		)
+	}
+
+	return c.String(http.StatusOK, "get user activation status handler!")
+}
+
+func (app *application) updateUserActivationStatusHandler(c echo.Context) error {
+	return c.String(http.StatusOK, "update user activation status handler!")
+}
