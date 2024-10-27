@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/N0tR1CH/sad/internal/data"
@@ -457,7 +459,7 @@ func (app *application) getUserActivationSectionHandler(c echo.Context) error {
 	}
 	if err := c.Validate(&input); err != nil {
 		app.logger.Error(
-			"app#getUserActivationSectionHandler - Values could no be binded",
+			"app#getUserActivationSectionHandler - Values could no be validated",
 			"Err",
 			err.Error(),
 		)
@@ -467,9 +469,90 @@ func (app *application) getUserActivationSectionHandler(c echo.Context) error {
 		)
 	}
 
-	return c.String(http.StatusOK, "get user activation status handler!")
+	return views.Render(
+		c,
+		http.StatusOK,
+		pages.ActivationPage(pages.NewActivationPageProps(input.Id, input.Token)),
+	)
 }
 
 func (app *application) updateUserActivationStatusHandler(c echo.Context) error {
-	return c.String(http.StatusOK, "update user activation status handler!")
+	var input struct {
+		Id    string `param:"id" validate:"required,number"`
+		Token string `form:"token" validate:"required,len=32,base32"`
+	}
+
+	if err := c.Bind(&input); err != nil {
+		app.logger.Error(
+			"app#updateUserActivationSectionHandler - Values could no be binded",
+			"Err",
+			err.Error(),
+		)
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.ActivationPageError("Values could not be binded to the request!"),
+		)
+	}
+	if err := c.Validate(&input); err != nil {
+		app.logger.Error(
+			"app#updateUserActivationSectionHandler - Values could not be validated",
+			"Err",
+			err.Error(),
+			"Input",
+			input,
+		)
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.ActivationPageError("Values could not be validated."),
+		)
+	}
+
+	u, err := app.models.Users.GetForToken(data.TokenTypeActivation, strings.Trim(input.Token, "="))
+	if err != nil || strconv.Itoa(u.ID) != input.Id {
+		app.logger.Error(
+			"app#updateUserActivationSectionHandler - While getting user by token",
+			"Err",
+			err.Error(),
+		)
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.ActivationPageError("Account could not be activated sorry!"),
+		)
+	}
+
+	u.Activated = true
+	if err := app.models.Users.Update(u); err != nil {
+		app.logger.Error(
+			"app#updateUserActivationSectionHandler - While updating the user",
+			"Err",
+			err.Error(),
+		)
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.ActivationPageError("Account could not be activated sorry!"),
+		)
+	}
+
+	if err := app.models.Tokens.DeleteAllForUser(data.TokenTypeActivation, u.ID); err != nil {
+		app.logger.Error(
+			"app#updateUserActivationSectionHandler - while deleting token for the user",
+			"Err",
+			err.Error(),
+		)
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.ActivationPageError("Account could not be activated sorry!"),
+		)
+	}
+
+	return views.Render(
+		c,
+		http.StatusOK,
+		pages.ActivationPageError("Account is activated! Enjoy our service."),
+	)
 }

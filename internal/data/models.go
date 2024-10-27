@@ -23,12 +23,12 @@ type Models struct {
 		Insert(user *User) error
 		GetByEmail(email string) (*User, error)
 		Update(user *User) error
-		EligibleToActivate(id int, token string) (bool, error)
+		GetForToken(scope string, plainTextToken string) (*User, error)
 	}
 	Tokens interface {
 		New(userID int, lifeTime time.Duration, tokenType TokenType) (*Token, error)
 		Insert(t *Token) error
-		DeleteAllForUser(userID int) error
+		DeleteAllForUser(scope string, userID int) error
 	}
 }
 

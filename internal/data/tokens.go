@@ -83,8 +83,7 @@ func (tm TokenModel) New(userID int, lifeTime time.Duration, tokenType TokenType
 func (tm TokenModel) Insert(t *Token) error {
 	query := `
 		INSERT INTO tokens (hash, user_id, expired_at, token_type)
-		VALUES ($1, $2, $3, $4)
-	`
+		VALUES ($1, $2, $3, $4)`
 	args := []any{t.Hash, t.UserID, t.ExpiredAt, string(t.TokenType)}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -95,15 +94,12 @@ func (tm TokenModel) Insert(t *Token) error {
 	return nil
 }
 
-func (tm TokenModel) DeleteAllForUser(userID int) error {
-	query := `
-		DELETE FROM tokens
-		WHERE user_id=$1
-		`
-	args := []any{userID}
+func (tm TokenModel) DeleteAllForUser(scope string, userID int) error {
+	query := `DELETE FROM tokens WHERE token_type = $1 AND user_id=$2`
+	args := []any{scope, userID}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	if _, err := tm.DB.ExecContext(ctx, query, args); err != nil {
+	if _, err := tm.DB.ExecContext(ctx, query, args...); err != nil {
 		return err
 	}
 	return nil

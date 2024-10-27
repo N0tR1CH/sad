@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -29,6 +30,49 @@ type User struct {
 
 type UserModel struct {
 	DB *sql.DB
+}
+
+func (um UserModel) GetForToken(scope string, plainTextToken string) (*User, error) {
+	var u User
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	query := `
+		SELECT
+			u.id,
+			u.created_at,
+			u.updated_at,
+			u.name,
+			u.email,
+			u.password_hash,
+			u.activated,
+			u.version
+		FROM
+			users u
+			INNER JOIN tokens t ON u.id=t.user_id
+		WHERE
+			t.hash = $1
+			AND t.token_type = $2
+			AND t.expired_at > $3`
+	hash := sha256.Sum256([]byte(plainTextToken))
+	args := []any{hash[:], scope, time.Now()}
+	if err := um.DB.QueryRowContext(ctx, query, args...).Scan(
+		&u.ID,
+		&u.CreatedAt,
+		&u.UpdatedAt,
+		&u.Name,
+		&u.Email,
+		&u.Password.hash,
+		&u.Activated,
+		&u.Version,
+	); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &u, nil
 }
 
 func (um UserModel) Insert(user *User) error {
@@ -116,19 +160,8 @@ func (um UserModel) GetByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
-func (um UserModel) EligibleToActivate(id int, token string) (bool, error) {
-	var exists bool
-	q := "SELECT EXISTS(SELECT id FROM users WHERE id = $1)"
-	if err := um.DB.QueryRow(q, id).Scan(&exists); err != nil {
-		return false, fmt.Errorf("UserExists %d: such user does not exist", id)
-	}
-	return exists, nil
-}
-
 func (um UserModel) Update(user *User) error {
-	ctx := context.Background()
-	stmt, err := um.DB.PrepareContext(
-		ctx, `
+	query := `
 		UPDATE
 			users
 		SET
@@ -141,25 +174,18 @@ func (um UserModel) Update(user *User) error {
 		WHERE
 			id = $5 AND version = $6
 		RETURNING
-			version
-		`,
-	)
-	if err != nil {
-		return fmt.Errorf("In UserModel#Update: %w", err)
-	}
-	defer stmt.Close()
+			version`
 	args := []any{
 		&user.Name,
 		&user.Email,
 		&user.Password.hash,
 		&user.Activated,
-		&user.Version,
 		&user.ID,
 		&user.Version,
 	}
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	if err := stmt.QueryRowContext(ctx, args...).Scan(&user.Version); err != nil {
+	if err := um.DB.QueryRowContext(ctx, query, args...).Scan(&user.Version); err != nil {
 		switch {
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
 			return ErrDuplicatedEmail
