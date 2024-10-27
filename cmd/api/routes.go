@@ -41,6 +41,7 @@ func (app *application) routes() http.Handler {
 }
 
 func (app *application) homeHandler(c echo.Context) error {
+	c.Set("success", struct{}{})
 	return views.Render(
 		c,
 		http.StatusOK,

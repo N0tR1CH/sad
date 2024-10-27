@@ -12,7 +12,6 @@ import (
 	"github.com/N0tR1CH/sad/internal/data"
 	"github.com/N0tR1CH/sad/internal/mailer"
 	"github.com/N0tR1CH/sad/views"
-	"github.com/N0tR1CH/sad/views/components"
 	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -163,37 +162,10 @@ func (app *application) createUserHandler(c echo.Context) error {
 		}
 	})
 
-	views.Render(
-		c,
-		http.StatusOK,
-		components.WrapAndSwap(
-			pages.SuccessfulAlert(),
-			"",
-			"afterbegin:#app-main-container",
-		),
-	)
-	if err != nil {
-		return views.Render(
-			c,
-			http.StatusOK,
-			pages.LoginFormBody(
-				pages.LoginPageProps{
-					PageTitle:       "Auth Page",
-					PageDescription: "Provide your email and we will redirect you to correct action.",
-					EmailFieldProps: pages.EmailFieldProps{
-						IsInputWrong: false,
-						InputValue:   input.Email,
-						ErrMsg:       "Problem with our service.",
-					},
-					Fields: nil,
-				},
-			),
-		)
-	}
 	c.Response().Header().Set("HX-Push-Url", "/")
 	c.Response().Header().Set("HX-Retarget", "#app-main-container")
 	c.Response().Header().Set("HX-Reswap", "innerHTML")
-
+	c.Set("activationSuccess", struct{}{})
 	return views.Render(
 		c,
 		http.StatusOK,
@@ -550,9 +522,10 @@ func (app *application) updateUserActivationStatusHandler(c echo.Context) error 
 		)
 	}
 
+	c.Response().Header().Set("HX-Reswap", "outerHTML")
 	return views.Render(
 		c,
 		http.StatusOK,
-		pages.ActivationPageError("Account is activated! Enjoy our service."),
+		pages.ActivationPageSuccess("Account is activated! Enjoy our service."),
 	)
 }
