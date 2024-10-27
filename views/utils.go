@@ -12,7 +12,7 @@ func Render(c echo.Context, statusCode int, t templ.Component) error {
 
 	ctx := c.Request().Context()
 	if _, ok := c.Get("activationSuccess").(struct{}); ok {
-		ctx = context.WithValue(c.Request().Context(), "activationSuccess", struct{}{})
+		ctx = context.WithValue(ctx, "activationSuccess", struct{}{})
 	}
 
 	if err := t.Render(ctx, buf); err != nil {
