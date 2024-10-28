@@ -106,6 +106,7 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Use(middleware.Secure())
 	e.Use(middleware.CORSWithConfig(corsConfig(app.config)))
 	e.Use(rate_limiter.NewWithConfig(rateLimiterConfig()))
+	e.Use(middleware.CSRF())
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return views.Render(c, http.StatusNotFound, pages.Page404())
 	})

@@ -3,6 +3,7 @@ package pages
 import (
 	"github.com/N0tR1CH/sad/views/layouts"
 	"fmt"
+	"encoding/json"
 )
 
 type LoginPageProps struct {
@@ -45,6 +46,11 @@ type EmailFieldProps struct {
 	ErrMsg       string
 }
 
+func tokenCSRF(token string) string {
+	bytes, _ := json.Marshal(map[string]string{"X-XSRF-TOKEN": token})
+	return string(bytes)
+}
+
 templ EmailField(props EmailFieldProps) {
 	<label
 		class="form-control w-full max-w-xs"
@@ -71,6 +77,9 @@ templ EmailField(props EmailFieldProps) {
 			hx-get="/users/validateEmail"
 			hx-target="#auth-form"
 			hx-swap="innerHTML"
+			if token, ok := ctx.Value("csrf").(string); ok {
+				hx-headers={ tokenCSRF(token) }
+			}
 		/>
 		if props.IsInputWrong || props.ErrMsg != "" {
 			@LoginErrorMessage(props.ErrMsg)
