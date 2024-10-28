@@ -47,7 +47,7 @@ type EmailFieldProps struct {
 }
 
 func tokenCSRF(token string) string {
-	bytes, _ := json.Marshal(map[string]string{"X-XSRF-TOKEN": token})
+	bytes, _ := json.Marshal(map[string]string{"X-CSRF-TOKEN": token})
 	return string(bytes)
 }
 
