@@ -103,6 +103,7 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Pre(middleware.RemoveTrailingSlashWithConfig(trailingSlashConfig))
 	e.Use(middleware.RequestLoggerWithConfig(requestLoggerConfig(app.logger)))
 	e.Use(middleware.Recover())
+	e.Use(middleware.Secure())
 	e.Use(middleware.CORSWithConfig(corsConfig(app.config)))
 	e.Use(rate_limiter.NewWithConfig(rateLimiterConfig()))
 	e.RouteNotFound("/*", func(c echo.Context) error {
