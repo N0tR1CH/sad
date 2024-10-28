@@ -4,14 +4,9 @@ templ SuccessfulAlert() {
 	<script type="module" x-data="{}" x-init="
       setTimeout(
         () => {
-          setTimeout(
-            () => {
-              $el.remove();
-            },
-            600
-          )
+          $el.remove();
         },
-        1500,
+        1500
       )
     ">
       Swal.fire({
