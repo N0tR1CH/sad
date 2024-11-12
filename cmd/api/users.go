@@ -35,6 +35,121 @@ func (app *application) loginHandler(c echo.Context) error {
 	)
 }
 
+func (app *application) authenticateUserHandler(c echo.Context) error {
+	app.sessionManager.Remove(c.Request().Context(), "usernameRight")
+	app.sessionManager.Remove(c.Request().Context(), "passwordRight")
+
+	var input struct {
+		Email    string `form:"email" validate:"required,email"`
+		Password string `form:"password" validate:"required,min=8,max=64,containsany=!@#?*,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=123456789"`
+	}
+
+	if err := c.Bind(&input); err != nil {
+		app.logger.Error("app#authenticateUserHandler-input-binding", "error", err.Error())
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.LoginFormBody(
+				pages.LoginPageProps{
+					PageTitle:       "Auth Page",
+					PageDescription: "Provide your email and we will redirect you to correct action.",
+					EmailFieldProps: pages.EmailFieldProps{
+						IsInputWrong: false,
+						InputValue:   input.Email,
+						ErrMsg:       "Values could not be bind.",
+					},
+					Fields: nil,
+				},
+			),
+		)
+	}
+
+	if err := c.Validate(&input); err != nil {
+		app.logger.Error("app#authenticateUserHandler-user-validation", "error", err.Error())
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.LoginFormBody(
+				pages.LoginPageProps{
+					PageTitle:       "Auth Page",
+					PageDescription: "Provide your email and we will redirect you to correct action.",
+					EmailFieldProps: pages.EmailFieldProps{
+						IsInputWrong: false,
+						InputValue:   input.Email,
+						ErrMsg:       "Values could not be validated.",
+					},
+					Fields: nil,
+				},
+			),
+		)
+	}
+
+	u, err := app.models.Users.GetByEmail(input.Email)
+	if err != nil {
+		app.logger.Error("app#authenticateUserHandler-user-retrieval", "error", err.Error())
+		if !errors.Is(err, data.ErrRecordNotFound) {
+			return err
+		}
+
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.LoginFormBody(
+				pages.LoginPageProps{
+					PageTitle:       "Auth Page",
+					PageDescription: "Provide your email and we will redirect you to correct action.",
+					EmailFieldProps: pages.EmailFieldProps{
+						IsInputWrong: false,
+						InputValue:   input.Email,
+						ErrMsg:       "User with such email or password doesn't exist",
+					},
+					Fields: nil,
+				},
+			),
+		)
+	}
+
+	match, err := u.Password.Match(input.Password)
+	if err != nil {
+		app.logger.Error("app#authenticateUserHandler-password-matching", "error", err.Error())
+		return err
+	}
+
+	if !match {
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.LoginFormBody(
+				pages.LoginPageProps{
+					PageTitle:       "Auth Page",
+					PageDescription: "Provide your email and we will redirect you to correct action.",
+					EmailFieldProps: pages.EmailFieldProps{
+						IsInputWrong: false,
+						InputValue:   input.Email,
+						ErrMsg:       "email or password are not right",
+					},
+					Fields: nil,
+				},
+			),
+		)
+	}
+
+	if err := app.sessionManager.RenewToken(c.Request().Context()); err != nil {
+		app.logger.Error("app#authenticateUserHandler-token-renewal", "error", err.Error())
+		return err
+	}
+	app.sessionManager.Put(c.Request().Context(), "userID", u.ID)
+
+	c.Response().Header().Set("HX-Push-Url", "/")
+	c.Response().Header().Set("HX-Retarget", "#app-main-container")
+	c.Response().Header().Set("HX-Reswap", "innerHTML")
+	return views.Render(
+		c,
+		http.StatusOK,
+		pages.AfterLoginPage(),
+	)
+}
+
 func (app *application) createUserHandler(c echo.Context) error {
 	app.sessionManager.Remove(c.Request().Context(), "usernameRight")
 	app.sessionManager.Remove(c.Request().Context(), "passwordRight")

@@ -84,6 +84,9 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	// POST /users/create
 	g.POST("/create", app.createUserHandler)
 
+	// POST /users/login
+	g.POST("/authenticate", app.authenticateUserHandler)
+
 	// GET /users/validateEmail?email=[string]
 	g.GET("/validateEmail", app.validateUserEmailHandler)
 

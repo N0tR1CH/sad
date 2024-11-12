@@ -1,5 +1,7 @@
 package components
 
+import "encoding/json"
+
 templ SuccessfulAlert() {
 	<script type="module" x-data="{}" x-init="
       setTimeout(
@@ -15,4 +17,9 @@ templ SuccessfulAlert() {
         icon: "success"
       });
   </script>
+}
+
+func TokenCSRF(token string) string {
+	bytes, _ := json.Marshal(map[string]string{"X-CSRF-TOKEN": token})
+	return string(bytes)
 }

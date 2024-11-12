@@ -84,7 +84,7 @@ templ Navbar() {
 					></path>
 				</svg>
 			</button>
-			<button class="btn btn-ghost btn-circle">
+		<button class="btn btn-ghost btn-circle">
 				<div class="indicator">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -102,14 +102,13 @@ templ Navbar() {
 					</svg>
 					<span class="badge badge-xs badge-primary indicator-item"></span>
 				</div>
-				<a href="/login">
-					<button class="btn btn-ghost btn-circle">
+				<button class="btn btn-ghost btn-circle">
+					<a id="navigate-to-login-anchor" href="/login">
 						<div class="indicator">
 							LOGIN
-							<span class="badge badge-xs badge-secondary indicator-item"></span>
 						</div>
-					</button>
-				</a>
+					</a>
+				</button>
 			</button>
 		</div>
 	</div>

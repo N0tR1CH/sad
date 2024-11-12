@@ -69,6 +69,9 @@ templ DiscussionForm(url string) {
 			hx-post="/discussions/create"
 			hx-trigger="confirmed"
 			hx-select-oob="#discussion-form:outerHTML"
+			if token, ok := ctx.Value("csrf").(string); ok {
+				hx-headers={ TokenCSRF(token) }
+			}
 			@click="
         sweetConfirm($el, {
           title: 'Create new discussion?',

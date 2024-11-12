@@ -3,7 +3,7 @@ package pages
 import (
 	"github.com/N0tR1CH/sad/views/layouts"
 	"fmt"
-	"encoding/json"
+	"github.com/N0tR1CH/sad/views/components"
 )
 
 type LoginPageProps struct {
@@ -11,6 +11,11 @@ type LoginPageProps struct {
 	PageDescription string
 	EmailFieldProps EmailFieldProps
 	Fields          templ.Component
+}
+
+templ AfterLoginPage() {
+	@components.Avatar("outerHTML:button:has(#navigate-to-login-anchor)")
+	@HomeBody()
 }
 
 templ LoginPage(props LoginPageProps) {
@@ -46,11 +51,6 @@ type EmailFieldProps struct {
 	ErrMsg       string
 }
 
-func tokenCSRF(token string) string {
-	bytes, _ := json.Marshal(map[string]string{"X-CSRF-TOKEN": token})
-	return string(bytes)
-}
-
 templ EmailField(props EmailFieldProps) {
 	<label
 		class="form-control w-full max-w-xs"
@@ -78,7 +78,7 @@ templ EmailField(props EmailFieldProps) {
 			hx-target="#auth-form"
 			hx-swap="innerHTML"
 			if token, ok := ctx.Value("csrf").(string); ok {
-				hx-headers={ tokenCSRF(token) }
+				hx-headers={ components.TokenCSRF(token) }
 			}
 		/>
 		if props.IsInputWrong || props.ErrMsg != "" {
@@ -194,7 +194,13 @@ templ LoginRegisterButton(shouldInclude bool, action string) {
 					class="btn btn-primary w-full m-4"
 					hx-swap-oob="true"
 					type="button"
-					hx-post="/users/login"
+					hx-post="/users/authenticate"
+					hx-target="#auth-form"
+					hx-swap="innerHTML"
+					hx-include="#auth-form"
+					if token, ok := ctx.Value("csrf").(string); ok {
+						hx-headers={ components.TokenCSRF(token) }
+					}
 				>
 					Login
 				</button>
@@ -209,7 +215,7 @@ templ LoginRegisterButton(shouldInclude bool, action string) {
 					hx-swap="innerHTML"
 					hx-include="#auth-form"
 					if token, ok := ctx.Value("csrf").(string); ok {
-						hx-headers={ tokenCSRF(token) }
+						hx-headers={ components.TokenCSRF(token) }
 					}
 				>
 					Create Account

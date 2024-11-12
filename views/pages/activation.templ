@@ -1,6 +1,7 @@
 package pages
 
 import "github.com/N0tR1CH/sad/views/layouts"
+import "github.com/N0tR1CH/sad/views/components"
 import "fmt"
 import "encoding/json"
 
@@ -39,7 +40,7 @@ templ ActivationPage(props activationPageProps) {
 				hx-trigger="load, activate"
 				hx-vals={ tokenJSON(props.token) }
 				if token, ok := ctx.Value("csrf").(string); ok {
-					hx-headers={ tokenCSRF(token) }
+					hx-headers={ components.TokenCSRF(token) }
 				}
 			>
 				<span class="loading loading-dots loading-lg"></span>
