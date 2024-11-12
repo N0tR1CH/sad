@@ -38,6 +38,9 @@ templ ActivationPage(props activationPageProps) {
 				hx-target="this"
 				hx-trigger="load, activate"
 				hx-vals={ tokenJSON(props.token) }
+				if token, ok := ctx.Value("csrf").(string); ok {
+					hx-headers={ tokenCSRF(token) }
+				}
 			>
 				<span class="loading loading-dots loading-lg"></span>
 			</div>

@@ -208,6 +208,9 @@ templ LoginRegisterButton(shouldInclude bool, action string) {
 					hx-target="#auth-form"
 					hx-swap="innerHTML"
 					hx-include="#auth-form"
+					if token, ok := ctx.Value("csrf").(string); ok {
+						hx-headers={ tokenCSRF(token) }
+					}
 				>
 					Create Account
 				</button>

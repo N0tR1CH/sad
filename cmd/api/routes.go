@@ -97,5 +97,9 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	g.GET("/:id/activated", app.getUserActivationSectionHandler)
 
 	// PUT /users/activated/:id/activated
+	//
+	// FormData:
+	// - token: string
+	//
 	g.PUT("/:id/activated", app.updateUserActivationStatusHandler)
 }
