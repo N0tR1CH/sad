@@ -1,0 +1,145 @@
+package pages
+
+import "github.com/N0tR1CH/sad/views/layouts"
+import "github.com/N0tR1CH/sad/views/components"
+import "fmt"
+import "encoding/json"
+
+type activationPageProps struct {
+	userId string
+	token  string
+}
+
+func NewActivationPageProps(userId, token string) activationPageProps {
+	return activationPageProps{userId: userId, token: token}
+}
+
+func urlForUserActivation(userId string) string {
+	return string(
+		templ.URL(
+			fmt.Sprintf("/users/%s/activated", userId),
+		),
+	)
+}
+
+func tokenJSON(token string) string {
+	bytes, _ := json.Marshal(map[string]string{"token": token})
+	return string(bytes)
+}
+
+templ ActivationPage(props activationPageProps) {
+	@layouts.Base() {
+		<div
+			class="prose text-center mx-2 sm:mx-auto"
+		>
+			<h2>Account activation</h2>
+			<div
+				hx-put={ urlForUserActivation(props.userId) }
+				hx-swap="innerHTML"
+				hx-target="this"
+				hx-trigger="load, activate"
+				hx-vals={ tokenJSON(props.token) }
+				if token, ok := ctx.Value("csrf").(string); ok {
+					hx-headers={ components.TokenCSRF(token) }
+				}
+			>
+				<span class="loading loading-dots loading-lg"></span>
+			</div>
+			<p>If account cannot be activated manually, try visiting the email again!</p>
+		</div>
+	}
+}
+
+templ ActivationPageError(msg string) {
+	<button
+		class="btn mb-2"
+		id="activate-account-btn"
+		_="on click send activate to closest parent <div />"
+	>
+		Activate
+	</button>
+	<div
+		id="activation-page-error"
+		role="alert"
+		class="alert alert-error"
+		x-data="{ show: true }"
+		x-show="show"
+		x-transition:enter.duration.500ms
+		x-transition:leave.duration.400ms
+		x-init="
+      setTimeout(
+        () => {
+          show = false;
+          setTimeout(
+            () => {
+              $el.remove();
+            },
+            600
+          )
+        },
+        1500,
+      )
+    "
+	>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="h-6 w-6 shrink-0 stroke-current"
+			fill="none"
+			viewBox="0 0 24 24"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+			></path>
+		</svg>
+		<span>{ msg }</span>
+	</div>
+}
+
+templ ActivationPageSuccess(msg string) {
+	<a
+		class="link link-success"
+		href="/"
+	>
+		Go to main page ;)
+	</a>
+	<div
+		role="alert"
+		class="alert alert-success"
+		x-data="{ show: true }"
+		x-show="show"
+		x-transition:enter.duration.500ms
+		x-transition:leave.duration.400ms
+		x-init="
+      setTimeout(
+        () => {
+          show = false;
+          setTimeout(
+            () => {
+              $el.remove();
+            },
+            600
+          )
+        },
+        1500,
+      )
+    "
+	>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="h-6 w-6 shrink-0 stroke-current"
+			fill="none"
+			viewBox="0 0 24 24"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+			></path>
+		</svg>
+		<span>{ msg }</span>
+	</div>
+}

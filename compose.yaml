@@ -8,5 +8,23 @@ services:
     ports:
       - "5432:5432"
 
+  redis:
+    image: arm64v8/redis:7.4
+    ports:
+      - "6379:6379"
+
+  mailcrab:
+    image: marlonb/mailcrab:latest
+    #        environment:
+    #            ENABLE_TLS_AUTH: true # optionally enable TLS for the SMTP server
+    #            MAILCRAB_PREFIX: emails # optionally prefix the webinterface with a path
+    #        volumes:
+    #           key.pem:/app/key.pem:ro # optionally provide your own keypair for TLS, else a pair will be generated
+    #           cert.pem:/app/cert.pem:ro
+    ports:
+      - '1080:1080'
+      - '1025:1025'
+    networks: [default]
+
 volumes:
   db_data:

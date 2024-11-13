@@ -8,6 +8,7 @@ import (
 
 var (
 	ErrRecordNotFound = errors.New("record not found")
+	ErrEditConflict   = errors.New("record could not be updated")
 )
 
 type Models struct {
@@ -18,20 +19,23 @@ type Models struct {
 		Update(discussion *Discussion) error
 		Delete(id int64) error
 	}
+	Users interface {
+		Insert(user *User) error
+		GetByEmail(email string) (*User, error)
+		Update(user *User) error
+		GetForToken(scope string, plainTextToken string) (*User, error)
+	}
+	Tokens interface {
+		New(userID int, lifeTime time.Duration, tokenType TokenType) (*Token, error)
+		Insert(t *Token) error
+		DeleteAllForUser(scope string, userID int) error
+	}
 }
 
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Discussions: DiscussionModel{DB: db},
+		Users:       UserModel{DB: db},
+		Tokens:      TokenModel{DB: db},
 	}
-}
-
-type Discussion struct {
-	ID          int
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Url         string
-	Title       string
-	Description string
-	PreviewSrc  string
 }

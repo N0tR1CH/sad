@@ -1,5 +1,5 @@
-web: task watch
+web: air
 db: docker compose up
-css: task watch-css
-js: task watch-js
-hr: task enable-hr
+css: tailwindcss -i ./scripts/input.css -o ./cmd/web/assets/css/output.css --watch --minify
+js: cd ./scripts; pnpm run dev
+hr: pnpx nodemon --ext go,css --watch ./views --watch ./cmd/web/assets/css/output.css ./scripts/hot_reload/hot_reload.mjs

@@ -3,43 +3,31 @@ package pages
 import (
 	"github.com/N0tR1CH/sad/views/components"
 	"github.com/N0tR1CH/sad/views/layouts"
-	"github.com/N0tR1CH/sad/internal/data"
 )
 
-type HomeViewModel struct {
-	discussionCardViewModels []components.DiscussionCardViewModel
-}
-
-func NewHomeViewModel(discussions []data.Discussion) HomeViewModel {
-	dcvms := make([]components.DiscussionCardViewModel, 0, len(discussions))
-
-	for _, discussion := range discussions {
-		dcvms = append(
-			dcvms,
-			components.DiscussionCardViewModel{
-				ImgSrc:    discussion.PreviewSrc,
-				CardTitle: discussion.Title,
-			},
-		)
-	}
-
-	return HomeViewModel{discussionCardViewModels: dcvms}
-}
-
-templ Home(hvm HomeViewModel) {
+templ Home() {
 	@layouts.Base() {
-		@components.Logo()
-		@components.UrlShare()
-		@components.DiscussionCards() {
-			for _, dcvm := range hvm.discussionCardViewModels {
-				@components.DiscussionCard(
-					components.DiscussionCardViewModel{
-						ImgSrc:    dcvm.ImgSrc,
-						CardTitle: dcvm.CardTitle,
-					},
-					false,
-				)
-			}
-		}
+		@HomeBody()
 	}
+}
+
+templ HomeBody() {
+	if _, ok := ctx.Value("activationSuccess").(struct{}); ok {
+		@components.SuccessfulAlert()
+	}
+	@components.Logo()
+	@components.UrlShare()
+	<div class="flex center justify-center py-4 md:py-8 flex-wrap gap-x-2">
+		<button class="btn btn-outline">Popular</button>
+		<button class="btn">Gaming</button>
+		<button class="btn">Sport</button>
+		<button class="btn">Beauty</button>
+	</div>
+	<section
+		id="discussion-cards"
+		class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4"
+		hx-get="/discussions"
+		hx-trigger="load"
+		hx-swap="innerHTML"
+	></section>
 }

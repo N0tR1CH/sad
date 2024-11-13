@@ -1,0 +1,47 @@
+package mailer
+
+import "fmt"
+
+templ MailSubject() {
+	Welcome to SAD!
+}
+
+// TODO: Remember to change address for valid one
+templ PlainBody(userId int, plainTextToken string) {
+	{ fmt.Sprintf(`
+      Hi,
+
+      Thanks for signing up for a Share and Discuss account. We're excited to have you on board!
+
+      Activate your account by visiting link below!
+
+      %s
+
+      Thanks,
+
+      Share and Dicuss Team`,
+      fmt.Sprintf("https://localhost:4000/users/%d/activated?token=%s", userId, plainTextToken),
+    ) }
+}
+
+// TODO: Remember to change address for valid one
+templ HtmlBody(userId int, plainTextToken string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta name="viewport" content="width=device-width"/>
+			<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+		</head>
+		<body>
+			<p>Hi,</p>
+			<p>Thanks for signing up for a Share and Discuss account. We're excited to have you on board!</p>
+			<p>For future reference, your user ID number is { fmt.Sprintf("%d", userId) }</p>
+			<p>Activate your account by visiting link below!</p>
+			<a href={ templ.URL(fmt.Sprintf("https://localhost:4000/users/%d/activated?token=%s======", userId, plainTextToken)) }>
+				ACTIVATE
+			</a>
+			<p>Thanks,</p>
+			<p>Share and Discuss Team</p>
+		</body>
+	</html>
+}

@@ -1,0 +1,302 @@
+package pages
+
+import (
+	"github.com/N0tR1CH/sad/views/layouts"
+	"fmt"
+	"github.com/N0tR1CH/sad/views/components"
+)
+
+type LoginPageProps struct {
+	PageTitle       string
+	PageDescription string
+	EmailFieldProps EmailFieldProps
+	Fields          templ.Component
+}
+
+templ AfterLoginPage() {
+	@components.Avatar("outerHTML:button:has(#navigate-to-login-anchor)")
+	@HomeBody()
+}
+
+templ LoginPage(props LoginPageProps) {
+	@layouts.Base() {
+		<div class="flex flex-col items-center">
+			<form
+				id="auth-form"
+				class="prose flex flex-col items-center"
+				hx-encoding="multipart/form-data"
+			>
+				@LoginFormBody(props)
+			</form>
+		</div>
+	}
+}
+
+templ LoginFormBody(props LoginPageProps) {
+	@AuthPageTitle(props.PageTitle)
+	@AuthPageDescription(props.PageDescription)
+	@EmailField(props.EmailFieldProps)
+	if props.Fields != nil {
+		@props.Fields
+	}
+}
+
+templ AuthPageTitle(title string) {
+	<h1 id="auth-page-name" class="text-center">{ title }</h1>
+}
+
+templ AuthPageDescription(description string) {
+	<p id="auth-page-description" class="p-4">{ description }</p>
+}
+
+type EmailFieldProps struct {
+	IsInputWrong bool
+	InputValue   string
+	ErrMsg       string
+}
+
+templ EmailField(props EmailFieldProps) {
+	<label
+		class="form-control w-full max-w-xs"
+	>
+		<div class="label">
+			<span class="label-text">Email</span>
+		</div>
+		<input
+			x-data={ fmt.Sprintf(`{ inputValue: "%s" }`, props.InputValue) }
+			:value="inputValue"
+			type="email"
+			id="email"
+			name="email"
+			placeholder="juan2137@mail.com"
+			class={
+				"input",
+				"input-bordered",
+				"w-full",
+				"max-w-xs",
+				templ.KV("input-error", props.IsInputWrong),
+				templ.KV("input-success", !props.IsInputWrong && (props.InputValue != "")),
+			}
+			hx-trigger="change, keyup delay:500ms changed"
+			hx-get="/users/validateEmail"
+			hx-target="#auth-form"
+			hx-swap="innerHTML"
+			if token, ok := ctx.Value("csrf").(string); ok {
+				hx-headers={ components.TokenCSRF(token) }
+			}
+		/>
+		if props.IsInputWrong || props.ErrMsg != "" {
+			@LoginErrorMessage(props.ErrMsg)
+		}
+	</label>
+}
+
+type UsernameFieldProps struct {
+	IsInputWrong        bool
+	InputValue          string
+	ErrMsg              string
+	IncludeSubmitButton bool
+	SubmitButtonAction  string
+}
+
+templ UsernameField(props UsernameFieldProps) {
+	<label
+		class="form-control w-full max-w-xs"
+	>
+		<div class="label">
+			<span class="label-text">Username</span>
+		</div>
+		<input
+			x-data={ fmt.Sprintf(`{ inputValue: "%s" }`, props.InputValue) }
+			:value="inputValue"
+			type="text"
+			id="username"
+			name="username"
+			placeholder="juan"
+			class={
+				"input",
+				"input-bordered",
+				"w-full",
+				"max-w-xs",
+				templ.KV("input-error", props.IsInputWrong),
+				templ.KV("input-success", !props.IsInputWrong && (props.InputValue != "")),
+			}
+			hx-trigger="change, keyup delay:500ms changed"
+			hx-get="/users/validateUsername"
+			hx-target="closest label"
+			hx-swap="outerHTML"
+		/>
+		if props.IsInputWrong || props.ErrMsg != "" {
+			@LoginErrorMessage(props.ErrMsg)
+		}
+	</label>
+	@LoginRegisterButton(props.IncludeSubmitButton, props.SubmitButtonAction)
+}
+
+type PasswordFieldProps struct {
+	IsInputWrong        bool
+	InputValue          string
+	ErrMsg              string
+	IncludeSubmitButton bool
+	SubmitButtonAction  string
+}
+
+templ PasswordField(props PasswordFieldProps) {
+	<label
+		class="form-control w-full max-w-xs"
+	>
+		<div class="label">
+			<span class="label-text">Password</span>
+		</div>
+		<input
+			x-data={ fmt.Sprintf(`{ inputValue: "%s" }`, props.InputValue) }
+			:value="inputValue"
+			type="password"
+			id="password"
+			name="password"
+			placeholder="***** ***"
+			class={
+				"input",
+				"input-bordered",
+				"w-full",
+				"max-w-xs",
+				templ.KV("input-error", props.IsInputWrong),
+				templ.KV(
+					"input-success",
+					!props.IsInputWrong && (props.InputValue != ""),
+				),
+			}
+			hx-trigger="change, keyup delay:500ms changed"
+			hx-get="/users/validatePassword"
+			hx-target="closest label"
+			hx-swap="outerHTML"
+		/>
+		if props.IsInputWrong || props.ErrMsg != "" {
+			@LoginErrorMessage(props.ErrMsg)
+		}
+	</label>
+	@LoginRegisterButton(props.IncludeSubmitButton, props.SubmitButtonAction)
+}
+
+templ RegisterFields() {
+	@UsernameField(UsernameFieldProps{IsInputWrong: false})
+	@PasswordField(PasswordFieldProps{IsInputWrong: false})
+	<label
+		class="form-control w-full max-w-xs"
+	>
+		<div class="label">
+			<span class="label-text">Avatar</span>
+		</div>
+		<input
+			type="file"
+			name="file"
+			class="file-input file-input-bordered file-input-primary w-full max-w-xs"
+		/>
+	</label>
+	<progress
+		_="on htmx:xhr:progress set my.value to (event.detail.loaded/event.detail.total)*100"
+		id="progress"
+		class="progress progress-primary w-56 my-4"
+		value="0"
+		max="100"
+	></progress>
+	<button id="auth-form-submit-btn"></button>
+}
+
+templ LoginFields() {
+	@PasswordField(PasswordFieldProps{IsInputWrong: false})
+	<button id="auth-form-submit-btn"></button>
+}
+
+templ LoginRegisterButton(shouldInclude bool, action string) {
+	if shouldInclude {
+		switch action {
+			case "/login":
+				<button
+					id="auth-form-submit-btn"
+					class="btn btn-primary w-full m-4"
+					hx-swap-oob="true"
+					type="button"
+					hx-post="/users/authenticate"
+					hx-target="#auth-form"
+					hx-swap="innerHTML"
+					hx-include="#auth-form"
+					if token, ok := ctx.Value("csrf").(string); ok {
+						hx-headers={ components.TokenCSRF(token) }
+					}
+				>
+					Login
+				</button>
+			case "/register":
+				<button
+					id="auth-form-submit-btn"
+					class="btn btn-primary w-full m-4"
+					hx-swap-oob="true"
+					type="button"
+					hx-post="/users/create"
+					hx-target="#auth-form"
+					hx-swap="innerHTML"
+					hx-include="#auth-form"
+					if token, ok := ctx.Value("csrf").(string); ok {
+						hx-headers={ components.TokenCSRF(token) }
+					}
+				>
+					Create Account
+				</button>
+		}
+	} else {
+		<button id="auth-form-submit-btn" hx-swap-oob="true"></button>
+	}
+}
+
+templ LoginErrorMessage(message string) {
+	<div
+		role="alert"
+		class="alert alert-error my-4"
+		x-data="{ show: true }"
+		x-show="show"
+		x-transition:enter.duration.500ms
+		x-transition:leave.duration.400ms
+		x-init="
+      setTimeout(
+        () => {
+          show = false;
+          setTimeout(
+            () => {
+              $el.remove();
+            },
+            600
+          )
+        },
+        1500,
+      )
+    "
+	>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="h-6 w-6 shrink-0 stroke-current"
+			fill="none"
+			viewBox="0 0 24 24"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+			></path>
+		</svg>
+		<span class="text-wrap">{ message }</span>
+	</div>
+}
+
+templ SuccessfulAlert() {
+	<script type="module">
+    (() => {
+      Swal.fire({
+        title: "Good job!",
+        text: "We have sent email for account activation.",
+        icon: "success"
+      });
+    })()
+  </script>
+}

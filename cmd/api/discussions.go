@@ -14,11 +14,33 @@ import (
 
 func (app *application) newDiscussionHandler(c echo.Context) error {
 	url := c.QueryParam("url")
-	_, HTMX := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]
-	if HTMX {
+	if _, HTMX := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]; HTMX {
 		return views.Render(c, http.StatusOK, components.DiscussionForm(url))
 	}
 	return views.Render(c, http.StatusOK, pages.NewDiscussionPage(url))
+}
+
+func (app *application) getDiscussionsHandler(c echo.Context) error {
+	discussions, err := app.models.Discussions.GetAll()
+	if err != nil {
+		return c.String(
+			http.StatusInternalServerError,
+			"Couldn't retrieve discussions from the server!",
+		)
+	}
+
+	dcvms := make([]components.DiscussionCardViewModel, len(discussions))
+	for i := 0; i < len(discussions); i++ {
+		dcvms[i] = components.DiscussionCardViewModel{
+			ImgSrc:    discussions[i].PreviewSrc,
+			CardTitle: discussions[i].Title,
+		}
+	}
+
+	if _, HTMX := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]; HTMX {
+		return views.Render(c, http.StatusOK, components.DiscussionCards(dcvms))
+	}
+	return c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
 func (app *application) createDiscussionHandler(c echo.Context) error {
@@ -50,6 +72,11 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 						ve.Param(),
 					),
 				)
+			case "url":
+				errs = append(
+					errs,
+					fmt.Sprintf("Invalid URL format."),
+				)
 			default:
 				errs = append(errs, ve.Error())
 			}
@@ -70,30 +97,40 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 		)
 	}
 
-	if err := app.models.Discussions.Insert(
-		&data.Discussion{
-			Title:       input.Title,
-			Url:         input.Url,
-			Description: input.Description,
-			PreviewSrc:  previewSrc,
-		},
-	); err != nil {
-		return err
+	d := &data.Discussion{
+		Title:       input.Title,
+		Url:         input.Url,
+		Description: input.Description,
+		PreviewSrc:  previewSrc,
 	}
 
-	c.Response().Header().Set("HX-Retarget", "body")
+	if err := app.models.Discussions.Insert(d); err != nil {
+		return views.Render(
+			c,
+			http.StatusBadRequest,
+			components.DiscussionFormErrors([]string{err.Error()}),
+		)
+	}
+
+	c.Response().Header().Set("HX-Retarget", "#discussion-cards")
+	c.Response().Header().Set("HX-Reswap", "afterbegin")
 	c.Response().Header().Set("HX-Replace-Url", "/")
 
-	discussions, err := app.models.Discussions.GetAll()
-	if err != nil {
-		return err
-	}
+	views.Render(
+		c,
+		http.StatusOK,
+		components.UrlShareToSwap(),
+	)
 
 	return views.Render(
 		c,
 		http.StatusOK,
-		pages.Home(
-			pages.NewHomeViewModel(discussions),
+		components.DiscussionCard(
+			components.DiscussionCardViewModel{
+				CardTitle: input.Title,
+				ImgSrc:    previewSrc,
+			},
+			false,
 		),
 	)
 }

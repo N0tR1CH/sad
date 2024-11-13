@@ -3,7 +3,7 @@ import Socket from "./socket.js";
 import _hyperscript from "hyperscript.org";
 import EasyMDELib from "easymde";
 import Alpine from "alpinejs";
-import Swal, { SweetAlertOptions } from "sweetalert2";
+import Swal, { SweetAlertOptions } from "sweetalert2/src/sweetalert2.js";
 
 declare global {
   interface Window {

@@ -27,24 +27,23 @@ func (app *application) routes() http.Handler {
 	r.GET("/static/*", echo.WrapHandler(staticFilesHandler))
 	r.GET("/healthcheck", app.healthcheckhandler)
 	r.GET("/", app.homeHandler)
+	r.GET("/login", app.loginHandler)
+	r.GET("/register", func(c echo.Context) error {
+		return c.Redirect(http.StatusTemporaryRedirect, "/login")
+	})
 
 	app.discussionsRoutes(r)
+	app.usersRoutes(r)
 
 	return r
 }
 
 func (app *application) homeHandler(c echo.Context) error {
-	discussions, err := app.models.Discussions.GetAll()
-	if err != nil {
-		return err
-	}
-
+	c.Set("success", struct{}{})
 	return views.Render(
 		c,
 		http.StatusOK,
-		pages.Home(
-			pages.NewHomeViewModel(discussions),
-		),
+		pages.Home(),
 	)
 }
 
@@ -56,14 +55,52 @@ func (app *application) staticFilesHandler() http.Handler {
 }
 
 func (app *application) discussionsRoutes(e *echo.Echo) {
-	g := e.Group("/discussions")
+	g := e.Group("/discussions", echo.WrapMiddleware(app.sessionManager.LoadAndSave))
+	// Getting all discussions
+	g.GET("", app.getDiscussionsHandler)
 	// Creating new discussion
 	g.GET("/new", app.newDiscussionHandler)
-	g.POST("", app.createDiscussionHandler)
+	g.POST("/create", app.createDiscussionHandler)
 	// Validating discussion fields
 	g.GET("/title", app.validateDiscussionTitleHandler)
 	g.GET("/description", app.validateDiscussionDescriptionHandler)
 	g.GET("/url", app.validateDiscussionUrlHandler)
 	// Generating discussion card preview
 	g.GET("/preview", app.genDiscussionPreview)
+}
+
+// Create users group and sets its middleware.
+//
+// It has two parameters: a pointer to application instance with pointer to echo instace.
+// usersRoutes function create new group with the route and sets some middleware.
+// On the created group it sets handlers.
+//
+// /users/*
+func (app *application) usersRoutes(e *echo.Echo) {
+	g := e.Group("/users", echo.WrapMiddleware(app.sessionManager.LoadAndSave))
+
+	// POST /users/create
+	g.POST("/create", app.createUserHandler)
+
+	// POST /users/login
+	g.POST("/authenticate", app.authenticateUserHandler)
+
+	// GET /users/validateEmail?email=[string]
+	g.GET("/validateEmail", app.validateUserEmailHandler)
+
+	// GET /users/validateUsername?username=[string]
+	g.GET("/validateUsername", app.validateUserUsernameHandler)
+
+	// GET /users/validatePassword?password=[string]
+	g.GET("/validatePassword", app.validateUserPasswordHandler)
+
+	// GET /users/activated/:id/activated?token=[string]
+	g.GET("/:id/activated", app.getUserActivationSectionHandler)
+
+	// PUT /users/activated/:id/activated
+	//
+	// FormData:
+	// - token: string
+	//
+	g.PUT("/:id/activated", app.updateUserActivationStatusHandler)
 }
