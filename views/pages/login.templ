@@ -21,9 +21,13 @@ templ AfterLoginPage() {
 templ LoginPage(props LoginPageProps) {
 	@layouts.Base() {
 		<div class="flex flex-col items-center">
-			<div id="auth-form" class="prose flex flex-col items-center">
+			<form
+				id="auth-form"
+				class="prose flex flex-col items-center"
+				hx-encoding="multipart/form-data"
+			>
 				@LoginFormBody(props)
-			</div>
+			</form>
 		</div>
 	}
 }
@@ -177,6 +181,25 @@ templ PasswordField(props PasswordFieldProps) {
 templ RegisterFields() {
 	@UsernameField(UsernameFieldProps{IsInputWrong: false})
 	@PasswordField(PasswordFieldProps{IsInputWrong: false})
+	<label
+		class="form-control w-full max-w-xs"
+	>
+		<div class="label">
+			<span class="label-text">Avatar</span>
+		</div>
+		<input
+			type="file"
+			name="file"
+			class="file-input file-input-bordered file-input-primary w-full max-w-xs"
+		/>
+	</label>
+	<progress
+		_="on htmx:xhr:progress set my.value to (event.detail.loaded/event.detail.total)*100"
+		id="progress"
+		class="progress progress-primary w-56 my-4"
+		value="0"
+		max="100"
+	></progress>
 	<button id="auth-form-submit-btn"></button>
 }
 

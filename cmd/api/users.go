@@ -160,6 +160,17 @@ func (app *application) createUserHandler(c echo.Context) error {
 		Password string `form:"password" validate:"required,min=8,max=64,containsany=!@#?*,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=123456789"`
 	}
 
+	// file, err := c.FormFile("file")
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// src, err := file.Open()
+	// if err != nil {
+	// 	return err
+	// }
+	// defer src.Close()
+
 	if err := c.Bind(&input); err != nil {
 		return views.Render(
 			c,

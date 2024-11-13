@@ -1,5 +1,7 @@
 package layouts
 
+import "github.com/N0tR1CH/sad/views/components"
+
 templ Head() {
 	<head>
 		<meta charset="UTF-8"/>
@@ -84,7 +86,7 @@ templ Navbar() {
 					></path>
 				</svg>
 			</button>
-		<button class="btn btn-ghost btn-circle">
+			<button class="btn btn-ghost btn-circle">
 				<div class="indicator">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -102,6 +104,10 @@ templ Navbar() {
 					</svg>
 					<span class="badge badge-xs badge-primary indicator-item"></span>
 				</div>
+			</button>
+			if id, ok := ctx.Value("userID").(int); ok && (id != 0) {
+				@components.Avatar("")
+			} else {
 				<button class="btn btn-ghost btn-circle">
 					<a id="navigate-to-login-anchor" href="/login">
 						<div class="indicator">
@@ -109,7 +115,7 @@ templ Navbar() {
 						</div>
 					</a>
 				</button>
-			</button>
+			}
 		</div>
 	</div>
 }

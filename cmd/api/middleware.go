@@ -15,6 +15,16 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+type middlewareErr string
+
+const (
+	errNotAuthenticated = middlewareErr("user is not authenticated")
+)
+
+func (me middlewareErr) Error() string {
+	return string(me)
+}
+
 var (
 	trailingSlashConfig = middleware.TrailingSlashConfig{
 		RedirectCode: http.StatusMovedPermanently,
@@ -99,6 +109,18 @@ func DefaultSkipper(echo.Context) bool {
 	return false
 }
 
+func (app *application) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id := app.sessionManager.GetInt(c.Request().Context(), "userID")
+		if id == 0 {
+			return errNotAuthenticated
+		}
+		app.logger.Info("app#authenticateMiddleware", "msg", fmt.Sprintf("user with id=%d successfully authenticated", id))
+		c.Set("userID", id)
+		return next(c)
+	}
+}
+
 func (app *application) middleware(e *echo.Echo) {
 	e.Pre(middleware.RemoveTrailingSlashWithConfig(trailingSlashConfig))
 	e.Use(middleware.RequestLoggerWithConfig(requestLoggerConfig(app.logger)))
@@ -107,6 +129,8 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Use(middleware.CORSWithConfig(corsConfig(app.config)))
 	e.Use(rate_limiter.NewWithConfig(rateLimiterConfig()))
 	e.Use(middleware.CSRF())
+	e.Use(echo.WrapMiddleware(app.sessionManager.LoadAndSave))
+	e.Use(app.authenticate)
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return views.Render(c, http.StatusNotFound, pages.Page404())
 	})

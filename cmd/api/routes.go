@@ -26,10 +26,8 @@ func (app *application) routes() http.Handler {
 	r.Static("/public", "cmd/web/public")
 	r.GET("/static/*", echo.WrapHandler(staticFilesHandler))
 	r.GET("/healthcheck", app.healthcheckhandler)
-
-	r.GET("/", app.homeHandler, echo.WrapMiddleware(app.sessionManager.LoadAndSave))
-
-	r.GET("/login", app.loginHandler, echo.WrapMiddleware(app.sessionManager.LoadAndSave))
+	r.GET("/", app.homeHandler)
+	r.GET("/login", app.loginHandler)
 	r.GET("/register", func(c echo.Context) error {
 		return c.Redirect(http.StatusTemporaryRedirect, "/login")
 	})

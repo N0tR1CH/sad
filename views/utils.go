@@ -17,7 +17,9 @@ func Render(c echo.Context, statusCode int, t templ.Component) error {
 	if token, ok := c.Get("csrf").(string); ok {
 		ctx = context.WithValue(ctx, "csrf", token)
 	}
-
+	if id, ok := c.Get("userID").(int); ok {
+		ctx = context.WithValue(ctx, "userID", id)
+	}
 	if err := t.Render(ctx, buf); err != nil {
 		return err
 	}
