@@ -106,7 +106,7 @@ templ Navbar() {
 				</div>
 			</button>
 			if id, ok := ctx.Value("userID").(int); ok && (id != 0) {
-				@components.Avatar("")
+				@components.Avatar("", id)
 			} else {
 				<button class="btn btn-ghost btn-circle">
 					<a id="navigate-to-login-anchor" href="/login">

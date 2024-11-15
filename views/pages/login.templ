@@ -13,8 +13,8 @@ type LoginPageProps struct {
 	Fields          templ.Component
 }
 
-templ AfterLoginPage() {
-	@components.Avatar("outerHTML:button:has(#navigate-to-login-anchor)")
+templ AfterLoginPage(userID int) {
+	@components.Avatar("outerHTML:button:has(#navigate-to-login-anchor)", userID)
 	@HomeBody()
 }
 

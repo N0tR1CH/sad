@@ -12,6 +12,7 @@ import (
 	"github.com/N0tR1CH/sad/internal/data"
 	"github.com/N0tR1CH/sad/internal/mailer"
 	"github.com/N0tR1CH/sad/views"
+	"github.com/N0tR1CH/sad/views/components"
 	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -33,6 +34,57 @@ func (app *application) loginHandler(c echo.Context) error {
 			},
 		),
 	)
+}
+
+func (app *application) deauthenticateUserHandler(c echo.Context) error {
+	var input struct {
+		ID string `param:"id" validate:"number"`
+	}
+	if err := c.Bind(&input); err != nil {
+		app.logger.Error("app#deauthenticateUserHandler-input-binding", "error", err.Error())
+		return err
+	}
+	if err := c.Validate(&input); err != nil {
+		app.logger.Error("app#deauthenticateUserHandler-validation-binding", "error", err.Error())
+		return c.String(http.StatusBadRequest, "id must be a number")
+	}
+
+	currUId := app.sessionManager.GetInt(c.Request().Context(), "userID")
+	if currUId == 0 {
+		return c.String(http.StatusBadRequest, "user not logged in")
+	}
+
+	if id, err := strconv.Atoi(input.ID); err != nil || id != currUId {
+		app.logger.Error(
+			"app#deauthenticateUserHandler",
+			"msg", "conversion of id param or id param dont match real user id",
+			"error", err.Error(),
+		)
+		return err
+	}
+
+	exists, err := app.models.Users.Exists(currUId)
+	if err != nil {
+		app.logger.Error("app#deauthenticateUserHandler-database-problem", "error", err.Error())
+		return err
+	}
+
+	if !exists {
+		return c.String(http.StatusBadRequest, "user with such id does not exist or trying to log out other user")
+	}
+
+	app.sessionManager.Remove(c.Request().Context(), "userID")
+	c.Response().Header().Set("HX-Location", "/")
+	app.sessionManager.Put(
+		c.Request().Context(),
+		"alert",
+		components.AlertProps{
+			Title: "Logged out",
+			Text:  "You have been successfully logged out!",
+			Icon:  components.Success,
+		},
+	)
+	return c.NoContent(http.StatusOK)
 }
 
 func (app *application) authenticateUserHandler(c echo.Context) error {
@@ -140,13 +192,22 @@ func (app *application) authenticateUserHandler(c echo.Context) error {
 	}
 	app.sessionManager.Put(c.Request().Context(), "userID", u.ID)
 
+	app.sessionManager.Put(
+		c.Request().Context(),
+		"alert",
+		components.AlertProps{
+			Title: "Logged in",
+			Text:  "You have been successfully logged in!",
+			Icon:  components.Success,
+		},
+	)
 	c.Response().Header().Set("HX-Push-Url", "/")
 	c.Response().Header().Set("HX-Retarget", "#app-main-container")
 	c.Response().Header().Set("HX-Reswap", "innerHTML")
 	return views.Render(
 		c,
 		http.StatusOK,
-		pages.AfterLoginPage(),
+		pages.AfterLoginPage(u.ID),
 	)
 }
 

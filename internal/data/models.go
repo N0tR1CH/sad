@@ -24,6 +24,7 @@ type Models struct {
 		GetByEmail(email string) (*User, error)
 		Update(user *User) error
 		GetForToken(scope string, plainTextToken string) (*User, error)
+		Exists(id int) (bool, error)
 	}
 	Tokens interface {
 		New(userID int, lifeTime time.Duration, tokenType TokenType) (*Token, error)

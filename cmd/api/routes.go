@@ -5,6 +5,7 @@ import (
 
 	"github.com/N0tR1CH/sad/cmd/web"
 	"github.com/N0tR1CH/sad/views"
+	"github.com/N0tR1CH/sad/views/components"
 	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -31,6 +32,7 @@ func (app *application) routes() http.Handler {
 	r.GET("/register", func(c echo.Context) error {
 		return c.Redirect(http.StatusTemporaryRedirect, "/login")
 	})
+	r.GET("/alert", app.flashMessageHandler)
 
 	app.discussionsRoutes(r)
 	app.usersRoutes(r)
@@ -45,6 +47,21 @@ func (app *application) homeHandler(c echo.Context) error {
 		http.StatusOK,
 		pages.Home(),
 	)
+}
+
+func (app *application) flashMessageHandler(c echo.Context) error {
+	alert := app.sessionManager.Pop(c.Request().Context(), "alert")
+	switch alert.(type) {
+	case components.AlertProps:
+		ap := components.AlertProps{
+			Title: alert.(components.AlertProps).Title,
+			Text:  alert.(components.AlertProps).Text,
+			Icon:  alert.(components.AlertProps).Icon,
+		}
+		return views.Render(c, http.StatusOK, components.Alert(ap))
+	default:
+		return c.String(http.StatusOK, "")
+	}
 }
 
 func (app *application) staticFilesHandler() http.Handler {
@@ -82,8 +99,14 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	// POST /users/create
 	g.POST("/create", app.createUserHandler)
 
-	// POST /users/login
+	// POST /users/authenticate
 	g.POST("/authenticate", app.authenticateUserHandler)
+
+	// POST /users/:id/deauthenticate
+	//
+	// Params:
+	// - id: integer
+	g.POST("/:id/deauthenticate", app.deauthenticateUserHandler)
 
 	// GET /users/validateEmail?email=[string]
 	g.GET("/validateEmail", app.validateUserEmailHandler)

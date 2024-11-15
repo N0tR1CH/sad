@@ -109,13 +109,9 @@ func DefaultSkipper(echo.Context) bool {
 	return false
 }
 
-func (app *application) authenticate(next echo.HandlerFunc) echo.HandlerFunc {
+func (app *application) userIdExtraction(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := app.sessionManager.GetInt(c.Request().Context(), "userID")
-		if id == 0 {
-			return errNotAuthenticated
-		}
-		app.logger.Info("app#authenticateMiddleware", "msg", fmt.Sprintf("user with id=%d successfully authenticated", id))
 		c.Set("userID", id)
 		return next(c)
 	}
@@ -130,7 +126,7 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Use(rate_limiter.NewWithConfig(rateLimiterConfig()))
 	e.Use(middleware.CSRF())
 	e.Use(echo.WrapMiddleware(app.sessionManager.LoadAndSave))
-	e.Use(app.authenticate)
+	e.Use(app.userIdExtraction)
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return views.Render(c, http.StatusNotFound, pages.Page404())
 	})

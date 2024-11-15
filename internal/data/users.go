@@ -112,6 +112,18 @@ func (um UserModel) Insert(user *User) error {
 	return nil
 }
 
+func (um UserModel) Exists(id int) (bool, error) {
+	var exists bool
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	row := um.DB.QueryRowContext(ctx, "SELECT EXISTS(SELECT id FROM users WHERE id=$1)", id)
+
+	if err := row.Scan(&exists); err != nil {
+		return exists, err
+	}
+	return exists, nil
+}
+
 func (um UserModel) GetByEmail(email string) (*User, error) {
 	ctx := context.Background()
 	stmt, err := um.DB.PrepareContext(

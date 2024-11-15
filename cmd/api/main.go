@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"database/sql"
+	"encoding/gob"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -16,12 +17,17 @@ import (
 	"github.com/N0tR1CH/sad/internal/data"
 	"github.com/N0tR1CH/sad/internal/mailer"
 	"github.com/N0tR1CH/sad/internal/services"
+	"github.com/N0tR1CH/sad/views/components"
 	"github.com/alexedwards/scs/pgxstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/charmbracelet/log"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
+
+func init() {
+	gob.Register(components.AlertProps{})
+}
 
 const version = "1.0.0"
 

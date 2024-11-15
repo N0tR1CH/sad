@@ -12,6 +12,7 @@ templ Home() {
 }
 
 templ HomeBody() {
+	<div id="alert-container" hx-get="/alert" hx-trigger="load"></div>
 	if _, ok := ctx.Value("activationSuccess").(struct{}); ok {
 		@components.SuccessfulAlert()
 	}

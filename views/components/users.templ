@@ -1,6 +1,8 @@
 package components
 
-templ Avatar(oobValue string) {
+import "fmt"
+
+templ Avatar(oobValue string, userID int) {
 	<div
 		if oobValue != "" {
 			hx-swap-oob={ oobValue }
@@ -25,7 +27,16 @@ templ Avatar(oobValue string) {
 				</a>
 			</li>
 			<li><a>Settings</a></li>
-			<li><a>Logout</a></li>
+			<li>
+				<button
+					hx-post={ string(templ.URL(fmt.Sprintf("/users/%d/deauthenticate", userID))) }
+					if token, ok := ctx.Value("csrf").(string); ok {
+						hx-headers={ TokenCSRF(token) }
+					}
+				>
+					Logout
+				</button>
+			</li>
 		</ul>
 	</div>
 }
