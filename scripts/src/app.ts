@@ -4,6 +4,7 @@ import _hyperscript from "hyperscript.org";
 import EasyMDELib from "easymde";
 import Alpine from "alpinejs";
 import Swal, { SweetAlertOptions } from "sweetalert2/src/sweetalert2.js";
+import imageViewer from "./image_viewer.js";
 
 declare global {
   interface Window {
@@ -30,7 +31,11 @@ window.addEventListener("DOMContentLoaded", async (): Promise<void> => {
   };
 
   Socket.init();
+
+  // Alpine configuration
+  Alpine.data("imageViewer", imageViewer);
   Alpine.start();
+
   _hyperscript.browserInit();
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment

@@ -178,6 +178,34 @@ templ PasswordField(props PasswordFieldProps) {
 	@LoginRegisterButton(props.IncludeSubmitButton, props.SubmitButtonAction)
 }
 
+templ imageViewer() {
+	<div x-data="imageViewer">
+		<div class="flex flex-col items-center gap-y-4">
+			<template x-if="imageUrl != ''">
+				<div class="avatar">
+					<div class="ring-primary ring-offset-base-100 w-24 rounded-full ring ring-offset-2">
+						<img :src="imageUrl" class="m-0"/>
+					</div>
+				</div>
+			</template>
+			<template x-if="imageUrl == ''">
+				<div class="avatar placeholder">
+					<div class="bg-neutral text-neutral-content w-24 rounded-full">
+						<span class="text-3xl">U</span>
+					</div>
+				</div>
+			</template>
+			<input
+				type="file"
+				name="avatar"
+				accept="image/*"
+				class="file-input file-input-bordered file-input-primary w-full max-w-xs"
+				@change="fileChosen"
+			/>
+		</div>
+	</div>
+}
+
 templ RegisterFields() {
 	@UsernameField(UsernameFieldProps{IsInputWrong: false})
 	@PasswordField(PasswordFieldProps{IsInputWrong: false})
@@ -187,11 +215,7 @@ templ RegisterFields() {
 		<div class="label">
 			<span class="label-text">Avatar</span>
 		</div>
-		<input
-			type="file"
-			name="file"
-			class="file-input file-input-bordered file-input-primary w-full max-w-xs"
-		/>
+		@imageViewer()
 	</label>
 	<progress
 		_="on htmx:xhr:progress set my.value to (event.detail.loaded/event.detail.total)*100"
