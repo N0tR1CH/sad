@@ -3,8 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +17,8 @@ import (
 	"github.com/N0tR1CH/sad/views/components"
 	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+	"github.com/h2non/bimg"
 	"github.com/labstack/echo/v4"
 )
 
@@ -221,16 +225,27 @@ func (app *application) createUserHandler(c echo.Context) error {
 		Password string `form:"password" validate:"required,min=8,max=64,containsany=!@#?*,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=123456789"`
 	}
 
-	// file, err := c.FormFile("file")
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// src, err := file.Open()
-	// if err != nil {
-	// 	return err
-	// }
-	// defer src.Close()
+	file, err := c.FormFile("avatar")
+	if err != nil {
+		return err
+	}
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	fileBytes, err := io.ReadAll(src)
+	if err != nil {
+		return err
+	}
+	webpImgBytes, err := bimg.NewImage(fileBytes).Convert(bimg.WEBP)
+	resPath := fmt.Sprintf("/public/avatars/%s.webp", uuid.NewString())
+	filepath := fmt.Sprintf("cmd/web%s", resPath)
+	f, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	f.Write(webpImgBytes)
 
 	if err := c.Bind(&input); err != nil {
 		return views.Render(

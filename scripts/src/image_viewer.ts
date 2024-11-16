@@ -40,10 +40,19 @@ export default () => ({
     if (!this.croppable) {
       return;
     }
-    const croppedCanvas = this.cropper.getCroppedCanvas();
+    const croppedCanvas: HTMLCanvasElement = this.cropper.getCroppedCanvas();
     this.initCropper();
     const imgDataUrl = croppedCanvas.toDataURL("image/webp");
     this.imageUrl = imgDataUrl;
+    croppedCanvas.toBlob((blob) => {
+      const fileInput = this.$refs.fileInput as HTMLInputElement;
+      const dataTransfer = new DataTransfer();
+      const newFile = new File([blob], fileInput.files[0].name, {
+        type: "image/webp",
+      });
+      dataTransfer.items.add(newFile);
+      fileInput.files = dataTransfer.files;
+    }, "image/webp");
   },
   fileToDataUrl(e: Event, callback: ImageViewerCallback) {
     const input = e.target as HTMLInputElement;
@@ -59,13 +68,14 @@ export default () => ({
         text: "File must be under 2mbs",
       });
       input.value = "";
+      input.files[0] = null;
       return;
     }
     const reader: FileReader = new FileReader();
 
     reader.readAsDataURL(file);
     reader.onload = (onLoadEvent: ProgressEvent<FileReader>) => {
-      const res: string = onLoadEvent.target.result as string;
+      const res = onLoadEvent.target.result as string;
       callback(res);
     };
     this.initCropper();
