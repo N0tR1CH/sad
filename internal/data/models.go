@@ -25,6 +25,7 @@ type Models struct {
 		Update(user *User) error
 		GetForToken(scope string, plainTextToken string) (*User, error)
 		Exists(id int) (bool, error)
+		AvatarSrcByID(id int) (string, error)
 	}
 	Tokens interface {
 		New(userID int, lifeTime time.Duration, tokenType TokenType) (*Token, error)

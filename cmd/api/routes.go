@@ -120,6 +120,12 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	// GET /users/activated/:id/activated?token=[string]
 	g.GET("/:id/activated", app.getUserActivationSectionHandler)
 
+	// GET /users/:id/avatar
+	//
+	// Params:
+	// - id: integer
+	g.GET("/:id/avatar", app.getUserAvatarHandler)
+
 	// PUT /users/activated/:id/activated
 	//
 	// FormData:

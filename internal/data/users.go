@@ -21,6 +21,7 @@ type User struct {
 	ID        int
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	AvatarSrc string
 	Name      string
 	Email     string
 	Password  password
@@ -79,9 +80,9 @@ func (um UserModel) Insert(user *User) error {
 	ctx := context.Background()
 	stmt, err := um.DB.PrepareContext(
 		ctx, `
-		INSERT INTO users (name, email, password_hash, activated)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, created_at, updated_at, version
+		INSERT INTO users (name, email, password_hash, activated, avatar_src)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id, created_at, updated_at, version, avatar_src
 		`,
 	)
 	if err != nil {
@@ -93,6 +94,7 @@ func (um UserModel) Insert(user *User) error {
 		user.Email,
 		user.Password.hash,
 		user.Activated,
+		user.AvatarSrc,
 	}
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -101,6 +103,7 @@ func (um UserModel) Insert(user *User) error {
 		&user.CreatedAt,
 		&user.UpdatedAt,
 		&user.Version,
+		&user.AvatarSrc,
 	); err != nil {
 		switch {
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
@@ -170,6 +173,17 @@ func (um UserModel) GetByEmail(email string) (*User, error) {
 	}
 
 	return &user, nil
+}
+
+func (um UserModel) AvatarSrcByID(id int) (string, error) {
+	var src string
+	query := "SELECT COALESCE(avatar_src, '') FROM users WHERE id=$1"
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := um.DB.QueryRowContext(ctx, query, &id).Scan(&src); err != nil {
+		return "", err
+	}
+	return src, nil
 }
 
 func (um UserModel) Update(user *User) error {

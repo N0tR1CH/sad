@@ -16,6 +16,7 @@ import (
 	"github.com/N0tR1CH/sad/views"
 	"github.com/N0tR1CH/sad/views/components"
 	"github.com/N0tR1CH/sad/views/pages"
+	"github.com/a-h/templ"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/h2non/bimg"
@@ -225,27 +226,30 @@ func (app *application) createUserHandler(c echo.Context) error {
 		Password string `form:"password" validate:"required,min=8,max=64,containsany=!@#?*,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=123456789"`
 	}
 
+	var resPath string
 	file, err := c.FormFile("avatar")
-	if err != nil {
-		return err
+	if file != nil {
+		if err != nil {
+			return err
+		}
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+		fileBytes, err := io.ReadAll(src)
+		if err != nil {
+			return err
+		}
+		webpImgBytes, err := bimg.NewImage(fileBytes).Convert(bimg.WEBP)
+		resPath := fmt.Sprintf("/public/avatars/%s.webp", uuid.NewString())
+		filepath := fmt.Sprintf("cmd/web%s", resPath)
+		f, err := os.Create(filepath)
+		if err != nil {
+			return err
+		}
+		f.Write(webpImgBytes)
 	}
-	src, err := file.Open()
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-	fileBytes, err := io.ReadAll(src)
-	if err != nil {
-		return err
-	}
-	webpImgBytes, err := bimg.NewImage(fileBytes).Convert(bimg.WEBP)
-	resPath := fmt.Sprintf("/public/avatars/%s.webp", uuid.NewString())
-	filepath := fmt.Sprintf("cmd/web%s", resPath)
-	f, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	f.Write(webpImgBytes)
 
 	if err := c.Bind(&input); err != nil {
 		return views.Render(
@@ -288,6 +292,7 @@ func (app *application) createUserHandler(c echo.Context) error {
 	u := &data.User{
 		Email:     input.Email,
 		Name:      input.Username,
+		AvatarSrc: resPath,
 		Activated: false,
 	}
 	if err := u.Password.Set(input.Password); err != nil {
@@ -730,4 +735,31 @@ func (app *application) updateUserActivationStatusHandler(c echo.Context) error 
 		http.StatusOK,
 		pages.ActivationPageSuccess("Account is activated! Enjoy our service."),
 	)
+}
+
+func (app *application) getUserAvatarHandler(c echo.Context) error {
+	var input struct {
+		ID string `param:"id" validate:"required,number"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return err
+	}
+	if err := c.Validate(&input); err != nil {
+		return err
+	}
+	uID, err := strconv.Atoi(input.ID)
+	if err != nil {
+		return err
+	}
+	src, err := app.models.Users.AvatarSrcByID(uID)
+	if err != nil {
+		return err
+	}
+	var t templ.Component
+	if src != "" {
+		t = components.AvatarImg(src)
+	} else {
+		t = components.AvatarPlaceHolder()
+	}
+	return views.Render(c, http.StatusOK, t)
 }
