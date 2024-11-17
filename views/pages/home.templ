@@ -18,11 +18,14 @@ templ HomeBody() {
 	}
 	@components.Logo()
 	@components.UrlShare()
-	<div class="flex center justify-center py-4 md:py-8 flex-wrap gap-x-2">
-		<button class="btn btn-outline">Popular</button>
-		<button class="btn">Gaming</button>
-		<button class="btn">Sport</button>
-		<button class="btn">Beauty</button>
+	<div
+		id="category-buttons"
+		class="flex center justify-center py-4 md:py-8 flex-wrap gap-x-2"
+		hx-get="/categories"
+		hx-trigger="load"
+		hx-swap="innerHTML"
+	>
+		<!-- Buttons with categories to filter out discussions -->
 	</div>
 	<section
 		id="discussion-cards"

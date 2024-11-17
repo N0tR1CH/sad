@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/N0tR1CH/sad/internal/data"
 	"github.com/N0tR1CH/sad/views"
@@ -21,12 +22,34 @@ func (app *application) newDiscussionHandler(c echo.Context) error {
 }
 
 func (app *application) getDiscussionsHandler(c echo.Context) error {
-	discussions, err := app.models.Discussions.GetAll()
+	category := c.QueryParam("category")
+	discussions, err := app.models.Discussions.GetAll(category)
 	if err != nil {
+		app.logger.Error("app#getDiscussionsHandler", "err", err.Error())
 		return c.String(
 			http.StatusInternalServerError,
 			"Couldn't retrieve discussions from the server!",
 		)
+	}
+
+	if val, ok := c.Request().Header[http.CanonicalHeaderKey("activeCategoryId")]; ok {
+		activeCategoryId, err := strconv.Atoi(val[0])
+		if err != nil {
+			return err
+		}
+		categories, err := app.models.Categories.GetAll()
+		if err != nil {
+			return err
+		}
+		cps := make(components.CategoriesProps, len(categories))
+		for i := range cps {
+			cps[i].ID = categories[i].ID
+			cps[i].Name = categories[i].Name
+			if cps[i].ID == activeCategoryId {
+				cps[i].Active = true
+			}
+		}
+		views.Render(c, http.StatusOK, components.CategoriesOob(cps))
 	}
 
 	dcvms := make([]components.DiscussionCardViewModel, len(discussions))

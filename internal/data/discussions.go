@@ -8,6 +8,7 @@ import (
 type Discussion struct {
 	ID          int
 	CreatedAt   time.Time
+	CategoryID  int
 	UpdatedAt   time.Time
 	Url         string
 	Title       string
@@ -42,8 +43,25 @@ func (dm DiscussionModel) Get(id int64) (*Discussion, error) {
 	return nil, nil
 }
 
-func (dm DiscussionModel) GetAll() ([]Discussion, error) {
-	rows, err := dm.DB.Query("SELECT * FROM discussions")
+func (dm DiscussionModel) GetAll(category string) ([]Discussion, error) {
+	query := `
+	SELECT
+		d.id,
+		d.created_at,
+		d.updated_at,
+		d.url,
+		d.title,
+		d.description,
+		d.preview_src,
+		d.category_id
+	FROM
+		discussions d
+		JOIN categories c ON c.id=d.category_id
+	WHERE (LOWER(c.name)=LOWER($1) OR $1='')
+	ORDER BY
+		d.created_at DESC
+	`
+	rows, err := dm.DB.Query(query, &category)
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +79,7 @@ func (dm DiscussionModel) GetAll() ([]Discussion, error) {
 			&discussion.Title,
 			&discussion.Description,
 			&discussion.PreviewSrc,
+			&discussion.CategoryID,
 		); err != nil {
 			return discussions, err
 		}

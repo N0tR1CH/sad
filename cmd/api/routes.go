@@ -36,6 +36,7 @@ func (app *application) routes() http.Handler {
 
 	app.discussionsRoutes(r)
 	app.usersRoutes(r)
+	app.categoriesRoutes(r)
 
 	return r
 }
@@ -132,4 +133,10 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	// - token: string
 	//
 	g.PUT("/:id/activated", app.updateUserActivationStatusHandler)
+}
+
+func (app *application) categoriesRoutes(e *echo.Echo) {
+	g := e.Group("/categories")
+
+	g.GET("", app.getCategoriesHandler)
 }

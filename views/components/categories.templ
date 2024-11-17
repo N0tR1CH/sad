@@ -1,0 +1,47 @@
+package components
+
+import "fmt"
+import "encoding/json"
+
+type CategoryProps struct {
+	ID     int
+	Name   string
+	Active bool
+}
+
+type CategoriesProps []CategoryProps
+
+templ Category(cp CategoryProps) {
+	<button
+		id={ fmt.Sprintf("category-button-%d", cp.ID) }
+		class={ "btn", templ.KV("btn-outline", cp.Active) }
+		hx-get={ string(templ.URL(fmt.Sprintf("/discussions?category=%s", cp.Name))) }
+		hx-target="#discussion-cards"
+		hx-swap="innerHTML"
+		hx-push-url="true"
+		hx-headers={ func() string {
+            bytes, _ := json.Marshal(map[string]int{"activeCategoryId": cp.ID})
+            return string(bytes)
+        }() }
+	>
+		{ cp.Name }
+	</button>
+}
+
+templ Categories(cps CategoriesProps) {
+	for _, cp := range cps {
+		@Category(cp)
+	}
+}
+
+templ CategoriesOob(cps CategoriesProps) {
+	<div
+		id="category-buttons"
+		class="flex center justify-center py-4 md:py-8 flex-wrap gap-x-2"
+		hx-get="/categories"
+		hx-swap="innerHTML"
+		hx-swap-oob="true"
+	>
+		@Categories(cps)
+	</div>
+}

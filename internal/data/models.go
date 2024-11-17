@@ -15,7 +15,7 @@ type Models struct {
 	Discussions interface {
 		Insert(discussion *Discussion) error
 		Get(id int64) (*Discussion, error)
-		GetAll() ([]Discussion, error)
+		GetAll(category string) ([]Discussion, error)
 		Update(discussion *Discussion) error
 		Delete(id int64) error
 	}
@@ -32,6 +32,9 @@ type Models struct {
 		Insert(t *Token) error
 		DeleteAllForUser(scope string, userID int) error
 	}
+	Categories interface {
+		GetAll() ([]Category, error)
+	}
 }
 
 func NewModels(db *sql.DB) Models {
@@ -39,5 +42,6 @@ func NewModels(db *sql.DB) Models {
 		Discussions: DiscussionModel{DB: db},
 		Users:       UserModel{DB: db},
 		Tokens:      TokenModel{DB: db},
+		Categories:  CategoryModel{DB: db},
 	}
 }
