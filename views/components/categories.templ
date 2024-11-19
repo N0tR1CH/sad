@@ -19,7 +19,7 @@ templ Category(cp CategoryProps) {
 		hx-target="#discussion-cards"
 		hx-swap="innerHTML"
 		hx-push-url="true"
-		hx-headers={ func() string {
+		hx-vals={ func() string {
             bytes, _ := json.Marshal(map[string]int{"activeCategoryId": cp.ID})
             return string(bytes)
         }() }

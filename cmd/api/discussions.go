@@ -37,8 +37,10 @@ func (app *application) getDiscussionsHandler(c echo.Context) error {
 		)
 	}
 
-	if val, ok := c.Request().Header[http.CanonicalHeaderKey("activeCategoryId")]; ok {
-		activeCategoryId, err := strconv.Atoi(val[0])
+	if activeCategoryId := c.QueryParam(
+		"activeCategoryId",
+	); activeCategoryId != "" {
+		activeCategoryId, err := strconv.Atoi(activeCategoryId)
 		if err != nil {
 			return err
 		}
