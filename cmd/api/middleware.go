@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/N0tR1CH/sad/rate_limiter"
 	"github.com/N0tR1CH/sad/views"
+	"github.com/N0tR1CH/sad/views/components"
 	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -117,6 +119,42 @@ func (app *application) userIdExtraction(next echo.HandlerFunc) echo.HandlerFunc
 	}
 }
 
+func (app *application) authorize(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		app.logger.Info("app#authorize", "method", c.Request().Method, "path", c.Path())
+		bytes, _ := json.Marshal(
+			[]map[string]string{
+				{
+					"path":   c.Path(),
+					"method": c.Request().Method,
+				},
+			},
+		)
+		permission := string(bytes)
+		authorized, err := app.models.Users.Authorized(
+			c.Get("userID").(int),
+			permission,
+		)
+		if err != nil {
+			app.logger.Error("app#authorize", "err", err.Error())
+			return err
+		}
+		if !authorized {
+			app.sessionManager.Put(
+				c.Request().Context(),
+				"alert",
+				components.AlertProps{
+					Title: "Not Authorized",
+					Text:  "You are not authorized to do that!",
+					Icon:  components.Error,
+				},
+			)
+			return c.Redirect(http.StatusTemporaryRedirect, "/")
+		}
+		return next(c)
+	}
+}
+
 func (app *application) middleware(e *echo.Echo) {
 	e.Pre(middleware.RemoveTrailingSlashWithConfig(trailingSlashConfig))
 	e.Use(middleware.RequestLoggerWithConfig(requestLoggerConfig(app.logger)))
@@ -127,6 +165,7 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Use(middleware.CSRF())
 	e.Use(echo.WrapMiddleware(app.sessionManager.LoadAndSave))
 	e.Use(app.userIdExtraction)
+	e.Use(app.authorize)
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return views.Render(c, http.StatusNotFound, pages.Page404())
 	})

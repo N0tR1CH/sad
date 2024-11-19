@@ -27,6 +27,7 @@ type User struct {
 	Password  password
 	Activated bool
 	Version   int
+	RoleID    int
 }
 
 type UserModel struct {
@@ -224,6 +225,47 @@ func (um UserModel) Update(user *User) error {
 	return nil
 }
 
+func (um UserModel) Authorized(userID int, permission string) (bool, error) {
+	var (
+		authorized bool
+		args       []any
+		query      string
+	)
+
+	if userID == 0 {
+		query = `
+			SELECT EXISTS (
+				SELECT 1
+				FROM roles r
+				WHERE r.name='guest' AND permissions @> $1::jsonb
+			);
+		`
+		args = append(args, &permission)
+	} else {
+		query = `
+			SELECT EXISTS (
+				SELECT 1
+				FROM roles r
+				JOIN users u ON r.id = u.role_id
+				WHERE u.id=$1 AND permissions @> $2::jsonb
+		)`
+		args = append(args, &userID, &permission)
+	}
+
+	if err := um.DB.QueryRow(
+		query,
+		args...,
+	).Scan(&authorized); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return false, nil
+		default:
+			return false, err
+		}
+	}
+	return authorized, nil
+}
+
 type password struct {
 	plaintext *string
 	hash      []byte
@@ -251,7 +293,7 @@ func (p *password) Match(clearPassword string) (bool, error) {
 		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
 			return false, nil
 		default:
-			return false, nil
+			return false, err
 		}
 	}
 	return true, nil

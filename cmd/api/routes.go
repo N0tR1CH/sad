@@ -38,7 +38,24 @@ func (app *application) routes() http.Handler {
 	app.usersRoutes(r)
 	app.categoriesRoutes(r)
 
+	r.GET("/routes", getRoutes(r))
 	return r
+}
+
+func getRoutes(e *echo.Echo) echo.HandlerFunc {
+	routes := e.Routes()
+	var filteredRoutes []map[string]string
+	for _, route := range routes {
+		if route.Method != "echo_route_not_found" {
+			filteredRoutes = append(filteredRoutes, map[string]string{
+				"method": route.Method,
+				"path":   route.Path,
+			})
+		}
+	}
+	return func(c echo.Context) error {
+		return c.JSON(http.StatusOK, filteredRoutes)
+	}
 }
 
 func (app *application) homeHandler(c echo.Context) error {

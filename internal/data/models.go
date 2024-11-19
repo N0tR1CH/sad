@@ -26,6 +26,7 @@ type Models struct {
 		GetForToken(scope string, plainTextToken string) (*User, error)
 		Exists(id int) (bool, error)
 		AvatarSrcByID(id int) (string, error)
+		Authorized(userID int, permission string) (bool, error)
 	}
 	Tokens interface {
 		New(userID int, lifeTime time.Duration, tokenType TokenType) (*Token, error)
