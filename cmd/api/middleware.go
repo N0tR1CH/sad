@@ -160,6 +160,14 @@ func (app *application) authorize(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+func addHtmxToContext(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		_, ok := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]
+		c.Set("HTMX", ok)
+		return next(c)
+	}
+}
+
 func (app *application) middleware(e *echo.Echo) {
 	e.Pre(middleware.RemoveTrailingSlashWithConfig(trailingSlashConfig))
 	e.Use(middleware.RequestLoggerWithConfig(requestLoggerConfig(app.logger)))
@@ -171,6 +179,7 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Use(echo.WrapMiddleware(app.sessionManager.LoadAndSave))
 	e.Use(app.userIdExtraction)
 	e.Use(app.authorize)
+	e.Use(addHtmxToContext)
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return views.Render(c, http.StatusNotFound, pages.Page404())
 	})

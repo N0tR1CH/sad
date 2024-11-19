@@ -39,7 +39,7 @@ func (app *application) getDiscussionsHandler(c echo.Context) error {
 
 	if activeCategoryId := c.QueryParam(
 		"activeCategoryId",
-	); activeCategoryId != "" {
+	); activeCategoryId != "" && c.Get("HTMX").(bool) {
 		activeCategoryId, err := strconv.Atoi(activeCategoryId)
 		if err != nil {
 			return err
@@ -67,7 +67,7 @@ func (app *application) getDiscussionsHandler(c echo.Context) error {
 		}
 	}
 
-	if _, HTMX := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]; HTMX {
+	if c.Get("HTMX").(bool) {
 		return views.Render(
 			c,
 			http.StatusOK,
@@ -146,27 +146,17 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 		)
 	}
 
-	c.Response().Header().Set("HX-Retarget", "#discussion-cards")
-	c.Response().Header().Set("HX-Reswap", "afterbegin")
-	c.Response().Header().Set("HX-Replace-Url", "/")
-
-	views.Render(
-		c,
-		http.StatusOK,
-		components.UrlShareToSwap(),
+	c.Response().Header().Set("HX-Location", "/")
+	app.sessionManager.Put(
+		c.Request().Context(),
+		"alert",
+		components.AlertProps{
+			Title: "Discussion created!",
+			Text:  "You have successfully created a discussion!",
+			Icon:  components.Success,
+		},
 	)
-
-	return views.Render(
-		c,
-		http.StatusOK,
-		components.DiscussionCard(
-			components.DiscussionCardViewModel{
-				CardTitle: input.Title,
-				ImgSrc:    previewSrc,
-			},
-			false,
-		),
-	)
+	return c.NoContent(http.StatusOK)
 }
 
 func (app *application) validateDiscussionTitleHandler(c echo.Context) error {
