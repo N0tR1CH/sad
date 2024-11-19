@@ -43,7 +43,7 @@ func (dm DiscussionModel) Get(id int64) (*Discussion, error) {
 	return nil, nil
 }
 
-func (dm DiscussionModel) GetAll(category string) ([]Discussion, error) {
+func (dm DiscussionModel) GetAll(category string, page int) ([]Discussion, error) {
 	query := `
 	SELECT
 		d.id,
@@ -60,8 +60,11 @@ func (dm DiscussionModel) GetAll(category string) ([]Discussion, error) {
 	WHERE (LOWER(c.name)=LOWER($1) OR $1='')
 	ORDER BY
 		d.created_at DESC
+	LIMIT 9
+	OFFSET $2
 	`
-	rows, err := dm.DB.Query(query, &category)
+	offset := (page - 1) * 9
+	rows, err := dm.DB.Query(query, &category, &offset)
 	if err != nil {
 		return nil, err
 	}

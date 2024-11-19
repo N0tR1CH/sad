@@ -38,8 +38,6 @@ templ CategoriesOob(cps CategoriesProps) {
 	<div
 		id="category-buttons"
 		class="flex center justify-center py-4 md:py-8 flex-wrap gap-x-2"
-		hx-get="/categories"
-		hx-swap="innerHTML"
 		hx-swap-oob="true"
 	>
 		@Categories(cps)

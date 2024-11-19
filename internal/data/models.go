@@ -15,7 +15,7 @@ type Models struct {
 	Discussions interface {
 		Insert(discussion *Discussion) error
 		Get(id int64) (*Discussion, error)
-		GetAll(category string) ([]Discussion, error)
+		GetAll(category string, page int) ([]Discussion, error)
 		Update(discussion *Discussion) error
 		Delete(id int64) error
 	}

@@ -121,7 +121,10 @@ func (app *application) userIdExtraction(next echo.HandlerFunc) echo.HandlerFunc
 
 func (app *application) authorize(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		app.logger.Info("app#authorize", "method", c.Request().Method, "path", c.Path())
+		app.logger.Info("app#authorize",
+			"method", c.Request().Method,
+			"path", c.Path(),
+		)
 		bytes, _ := json.Marshal(
 			[]map[string]string{
 				{
@@ -140,6 +143,8 @@ func (app *application) authorize(next echo.HandlerFunc) echo.HandlerFunc {
 			return err
 		}
 		if !authorized {
+			app.logger.Info("app#authorize", "userID", c.Get("userID").(int))
+			app.logger.Info("app#authorize", "Path", c.Path())
 			app.sessionManager.Put(
 				c.Request().Context(),
 				"alert",

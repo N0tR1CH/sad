@@ -22,8 +22,13 @@ func (app *application) newDiscussionHandler(c echo.Context) error {
 }
 
 func (app *application) getDiscussionsHandler(c echo.Context) error {
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if err != nil {
+		page = 1
+	}
+	app.logger.Info("app#getDiscussionsHandler", "page", page)
 	category := c.QueryParam("category")
-	discussions, err := app.models.Discussions.GetAll(category)
+	discussions, err := app.models.Discussions.GetAll(category, page)
 	if err != nil {
 		app.logger.Error("app#getDiscussionsHandler", "err", err.Error())
 		return c.String(
@@ -61,7 +66,11 @@ func (app *application) getDiscussionsHandler(c echo.Context) error {
 	}
 
 	if _, HTMX := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]; HTMX {
-		return views.Render(c, http.StatusOK, components.DiscussionCards(dcvms))
+		return views.Render(
+			c,
+			http.StatusOK,
+			components.DiscussionCards(dcvms, page+1, category),
+		)
 	}
 	return c.Redirect(http.StatusTemporaryRedirect, "/")
 }
