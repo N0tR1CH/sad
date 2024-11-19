@@ -198,7 +198,7 @@ templ DiscussionCards(dcvms []DiscussionCardViewModel, nextPage int, currentCate
                         ),
                     )
                 }
-                return fmt.Sprintf("/discussions?page=%d?category=%s", nextPage, currentCategory)
+                return fmt.Sprintf("/discussions?page=%d&category=%s", nextPage, currentCategory)
             }() }
 			hx-trigger="revealed"
 			hx-swap="outerHTML"
