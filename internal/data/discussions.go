@@ -22,20 +22,22 @@ type DiscussionModel struct {
 
 func (dm DiscussionModel) Insert(discussion *Discussion) error {
 	query := `
-		INSERT INTO discussions (url, title, description, preview_src)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, created_at, updated_at
+		INSERT INTO discussions (url, title, description, preview_src, category_id)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id, created_at, updated_at, category_id
 	`
 	queryArgs := []any{
 		discussion.Url,
 		discussion.Title,
 		discussion.Description,
 		discussion.PreviewSrc,
+		discussion.CategoryID,
 	}
 	return dm.DB.QueryRow(query, queryArgs...).Scan(
 		&discussion.ID,
 		&discussion.CreatedAt,
 		&discussion.UpdatedAt,
+		&discussion.CategoryID,
 	)
 }
 

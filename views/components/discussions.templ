@@ -2,12 +2,37 @@ package components
 
 import "fmt"
 
-templ DiscussionForm(url string) {
+type DiscussionFormProps struct {
+	ResourceUrl string
+	Categories  CategoriesProps
+}
+
+templ DiscussionForm(dfp DiscussionFormProps) {
 	<form
 		x-data
 		id="discussion-form"
 		class="my-8 grid grid-flow-row grid-cols-1 grid-rows-[repeat(4,_auto)] gap-y-4 px-4"
 	>
+		<!-- Discussion Category selection -->
+		<input
+			id="category-filter"
+			name="category-filter"
+			type="text"
+			class="input input-bordered w-full"
+			placeholder="Filter categories in select field"
+			_="on keyup show <option /> in #category-select when its innerHTML contains my value"
+		/>
+		<label class="form-control w-full">
+			<select class="select select-bordered" name="categories" id="category-select">
+				<option disabled selected>Category</option>
+				for _, c := range dfp.Categories {
+					<option value={ fmt.Sprintf("%d", c.ID) }>
+						{ c.Name }
+					</option>
+				}
+			</select>
+		</label>
+		<!-- End of Discussion Category selection -->
 		<div class="relative flex h-12 flex-col gap-2">
 			<label for="title" class="absolute -top-2 left-2 bg-base-100 px-2 text-xs">
 				Title
@@ -52,7 +77,7 @@ templ DiscussionForm(url string) {
 				type="url"
 				id="url"
 				name="url"
-				value={ fmt.Sprintf("%s", url) }
+				value={ fmt.Sprintf("%s", dfp.ResourceUrl) }
 				hx-get="/discussions/url"
 				hx-target="next"
 				hx-trigger="load delay:1s, change, keyup delay:200ms changed"
@@ -142,7 +167,7 @@ templ DiscussionFormErrors(messages []string) {
 			x-transition:leave.duration.400ms
 			x-init="
 				setTimeout(() => { open = true }, 50);
-				setTimeout(() => { open = false }, 1500);
+				setTimeout(() => { open = false }, 3000);
 			"
 		>
 			<svg

@@ -14,11 +14,25 @@ import (
 )
 
 func (app *application) newDiscussionHandler(c echo.Context) error {
-	url := c.QueryParam("url")
-	if _, HTMX := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]; HTMX {
-		return views.Render(c, http.StatusOK, components.DiscussionForm(url))
+	categories, err := app.models.Categories.GetAll()
+	if err != nil {
+		return err
 	}
-	return views.Render(c, http.StatusOK, pages.NewDiscussionPage(url))
+	cps := make(components.CategoriesProps, len(categories))
+	for i := range cps {
+		cps[i].ID = categories[i].ID
+		cps[i].Name = categories[i].Name
+	}
+
+	dfp := components.DiscussionFormProps{
+		ResourceUrl: c.QueryParam("url"),
+		Categories:  cps,
+	}
+
+	if _, HTMX := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]; HTMX {
+		return views.Render(c, http.StatusOK, components.DiscussionForm(dfp))
+	}
+	return views.Render(c, http.StatusOK, pages.NewDiscussionPage(dfp))
 }
 
 func (app *application) getDiscussionsHandler(c echo.Context) error {
@@ -82,6 +96,7 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 		Title       string `form:"title" validate:"required,max=130"`
 		Description string `form:"description" validate:"required,max=4000"`
 		Url         string `form:"url" validate:"required,url"`
+		CategoryId  string `form:"categories" validate:"required,number"`
 	}
 
 	if err := c.Bind(&input); err != nil {
@@ -106,6 +121,14 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 						ve.Param(),
 					),
 				)
+			case "number":
+				errs = append(
+					errs,
+					fmt.Sprintf(
+						"Field '%s' must be a number",
+						ve.Field(),
+					),
+				)
 			case "url":
 				errs = append(
 					errs,
@@ -127,7 +150,7 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 		return views.Render(
 			c,
 			http.StatusBadRequest,
-			components.DiscussionFormErrors([]string{err.Error()}),
+			components.DiscussionFormErrors([]string{"Problem with the server"}),
 		)
 	}
 
@@ -138,11 +161,18 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 		PreviewSrc:  previewSrc,
 	}
 
+	cID, err := strconv.Atoi(input.CategoryId)
+	if err != nil {
+		app.logger.Error("app#createDiscussionHandler", "err", err.Error())
+	}
+	d.CategoryID = cID
+
 	if err := app.models.Discussions.Insert(d); err != nil {
+		app.logger.Error("app#createDiscussionHandler", "err", err.Error())
 		return views.Render(
 			c,
 			http.StatusBadRequest,
-			components.DiscussionFormErrors([]string{err.Error()}),
+			components.DiscussionFormErrors([]string{"Problem with the server"}),
 		)
 	}
 

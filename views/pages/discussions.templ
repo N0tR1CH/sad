@@ -5,8 +5,9 @@ import (
 	"github.com/N0tR1CH/sad/views/layouts"
 )
 
-templ NewDiscussionPage(url string) {
+templ NewDiscussionPage(dfp components.DiscussionFormProps) {
 	@layouts.Base() {
-		@components.DiscussionForm(url)
+		@components.Logo()
+		@components.DiscussionForm(dfp)
 	}
 }
