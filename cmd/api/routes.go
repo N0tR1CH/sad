@@ -44,17 +44,22 @@ func (app *application) routes() http.Handler {
 
 func getRoutes(e *echo.Echo) echo.HandlerFunc {
 	routes := e.Routes()
-	var filteredRoutes []map[string]string
+	routesSlice := make([]pages.RouteProp, 0, len(routes))
 	for _, route := range routes {
-		if route.Method != "echo_route_not_found" {
-			filteredRoutes = append(filteredRoutes, map[string]string{
-				"method": route.Method,
-				"path":   route.Path,
-			})
-		}
+		routesSlice = append(
+			routesSlice,
+			pages.RouteProp{
+				Path:   route.Path,
+				Method: route.Method,
+			},
+		)
 	}
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusOK, filteredRoutes)
+		return views.Render(
+			c,
+			http.StatusOK,
+			pages.Routes(pages.NewRoutesProps(routesSlice)),
+		)
 	}
 }
 
@@ -93,6 +98,8 @@ func (app *application) discussionsRoutes(e *echo.Echo) {
 	g := e.Group("/discussions", echo.WrapMiddleware(app.sessionManager.LoadAndSave))
 	// Getting all discussions
 	g.GET("", app.getDiscussionsHandler)
+	// Getting certain discussion
+	g.GET("/:id", app.getDiscussionHandler)
 	// Creating new discussion
 	g.GET("/new", app.newDiscussionHandler)
 	g.POST("/create", app.createDiscussionHandler)

@@ -5,6 +5,7 @@ import EasyMDELib from "easymde";
 import Alpine from "alpinejs";
 import Swal, { SweetAlertOptions } from "sweetalert2/src/sweetalert2.js";
 import imageViewer from "./image_viewer.js";
+import routesTable from "./routes_table.js";
 
 declare global {
   interface Window {
@@ -34,6 +35,7 @@ window.addEventListener("DOMContentLoaded", async (): Promise<void> => {
 
   // Alpine configuration
   Alpine.data("imageViewer", imageViewer);
+  Alpine.data("routesTable", routesTable);
   Alpine.start();
 
   _hyperscript.browserInit();

@@ -63,6 +63,12 @@ templ EmailField(props EmailFieldProps) {
 			<span class="label-text">Email</span>
 		</div>
 		<input
+			_="
+                on keydown[event.key === 'Enter'] from me
+                    halt the event
+                    send logReg to the #auth-form-submit-btn
+                end
+            "
 			x-data={ fmt.Sprintf(`{ inputValue: "%s" }`, props.InputValue) }
 			:value="inputValue"
 			type="email"
@@ -107,6 +113,12 @@ templ UsernameField(props UsernameFieldProps) {
 			<span class="label-text">Username</span>
 		</div>
 		<input
+			_="
+                on keydown[event.key === 'Enter'] from me
+                    halt the event
+                    send logReg to the #auth-form-submit-btn
+                end
+            "
 			x-data={ fmt.Sprintf(`{ inputValue: "%s" }`, props.InputValue) }
 			:value="inputValue"
 			type="text"
@@ -149,6 +161,12 @@ templ PasswordField(props PasswordFieldProps) {
 			<span class="label-text">Password</span>
 		</div>
 		<input
+			_="
+                on keydown[event.key === 'Enter'] from me
+                    halt the event
+                    send logReg to the #auth-form-submit-btn
+                end
+            "
 			x-data={ fmt.Sprintf(`{ inputValue: "%s" }`, props.InputValue) }
 			:value="inputValue"
 			type="password"
@@ -270,6 +288,7 @@ templ LoginRegisterButton(shouldInclude bool, action string) {
 					class="btn btn-primary w-full m-4"
 					hx-swap-oob="true"
 					type="button"
+					hx-trigger="click, logReg"
 					hx-post="/users/authenticate"
 					hx-target="#auth-form"
 					hx-swap="innerHTML"
@@ -286,6 +305,7 @@ templ LoginRegisterButton(shouldInclude bool, action string) {
 					class="btn btn-primary w-full m-4"
 					hx-swap-oob="true"
 					type="button"
+					hx-trigger="click, logReg"
 					hx-post="/users/create"
 					hx-target="#auth-form"
 					hx-swap="innerHTML"

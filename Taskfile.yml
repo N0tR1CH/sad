@@ -25,13 +25,13 @@ tasks:
       - rm sad-app
 
   watch:
-    deps: [kill-watch]
     summary: |
       It runs overmind process manager
     cmds:
       - cmd: echo "Hot reloading starting..."
         silent: true
-      - overmind s -f ./Procfile.dev
+      - ./dev.sh
+    interactive: true
 
   kill-watch:
     summary: |

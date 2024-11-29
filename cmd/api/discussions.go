@@ -91,6 +91,10 @@ func (app *application) getDiscussionsHandler(c echo.Context) error {
 	return c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
+func (app *application) getDiscussionHandler(c echo.Context) error {
+	return c.String(http.StatusOK, "discussion")
+}
+
 func (app *application) createDiscussionHandler(c echo.Context) error {
 	var input struct {
 		Title       string `form:"title" validate:"required,max=130"`
