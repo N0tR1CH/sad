@@ -59,6 +59,7 @@ type application struct {
 	config         *config
 	logger         *slog.Logger
 	models         data.Models
+	permissions    []data.Permission
 	services       services.Services
 	sessionManager *scs.SessionManager
 	mailer         mailer.Mailer
@@ -172,13 +173,13 @@ func newApplication(
 	mailer mailer.Mailer,
 ) *application {
 	return &application{
-		cfg,
-		logger,
-		models,
-		services,
-		sessionManager,
-		mailer,
-		sync.WaitGroup{},
+		config:         cfg,
+		logger:         logger,
+		models:         models,
+		services:       services,
+		sessionManager: sessionManager,
+		mailer:         mailer,
+		wg:             sync.WaitGroup{},
 	}
 }
 

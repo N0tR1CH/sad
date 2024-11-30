@@ -1,0 +1,168 @@
+package pages
+
+import "fmt"
+import "encoding/json"
+import "github.com/N0tR1CH/sad/views/layouts"
+import "github.com/N0tR1CH/sad/views/components"
+import "github.com/N0tR1CH/sad/internal/data"
+
+type RolesPageProps struct {
+	Rtpvms []RoleTablePositionViewModel
+	Pfvm   PermissionFormViewModel
+}
+
+type PermissionFormViewModel struct {
+	Roles map[int]string
+}
+
+func NewPermissionFormViewModel(roles []data.Role) PermissionFormViewModel {
+	pfvm := PermissionFormViewModel{Roles: make(map[int]string, len(roles))}
+	for _, r := range roles {
+		pfvm.Roles[r.ID] = r.Name
+	}
+	return pfvm
+}
+
+type RoleTablePositionViewModel struct {
+	ID     int
+	Name   string
+	Path   string
+	Method string
+}
+
+func NewRolesTableViewModel(roles []data.Role) []RoleTablePositionViewModel {
+	rtpvms := make([]RoleTablePositionViewModel, 0)
+	for _, r := range roles {
+		for _, p := range r.Permissions {
+			rtpvm := RoleTablePositionViewModel{
+				ID:     r.ID,
+				Name:   r.Name,
+				Path:   p.Path,
+				Method: p.Method,
+			}
+			rtpvms = append(rtpvms, rtpvm)
+		}
+	}
+	return rtpvms
+}
+
+func permissionJson(p data.Permission) string {
+	permission := map[string]string{"path": p.Path, "method": p.Method}
+	bytes, _ := json.Marshal(permission)
+	return string(bytes)
+}
+
+templ PermissionOptions(permissions data.Permissions) {
+	for _, p := range permissions {
+		<option value={ permissionJson(p) }>
+			{ permissionJson(p) }
+		</option>
+	}
+}
+
+templ PermissionForm(pfvm PermissionFormViewModel) {
+	<form
+		class="my-4 space-y-4 flex flex-col items-center"
+		if token, ok := ctx.Value("csrf").(string); ok {
+			hx-headers={ components.TokenCSRF(token) }
+		}
+		hx-post="/roles/permissions"
+	>
+		<select
+			name="roleId"
+			id="role-select"
+			class="select select-bordered w-64"
+			hx-get="/roles/permissions?left=true"
+			hx-target="#permission-select"
+		>
+			<option disabled selected>Pick the role</option>
+			for id, name := range pfvm.Roles {
+				<option value={ fmt.Sprintf("%d", id) }>
+					{ name }
+				</option>
+			}
+		</select>
+		<select
+			name="permission"
+			id="permission-select"
+			class="select select-bordered w-64"
+		>
+			<option disabled selected>Pick the permission</option>
+		</select>
+		<button
+			type="submit"
+			class="btn btn-primary w-64"
+		>
+			Add permission
+		</button>
+	</form>
+}
+
+templ PermissionsTable(rtpvms []RoleTablePositionViewModel) {
+	<div class="relative overflow-x-auto">
+		<table class="table">
+			<!-- head -->
+			<thead>
+				<tr>
+					<th></th>
+					<th>Name</th>
+					<th>Path</th>
+					<th>Method</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody
+				hx-confirm="Are you sure?"
+				hx-target="closest tr"
+				hx-swap="outerHTML"
+				if token, ok := ctx.Value("csrf").(string); ok {
+					hx-headers={ components.TokenCSRF(token) }
+				}
+			>
+				for _, rtpvm := range rtpvms {
+					<tr>
+						<th>{ fmt.Sprintf("%d", rtpvm.ID) }</th>
+						<td>{ rtpvm.Name }</td>
+						<td>{ rtpvm.Path }</td>
+						<td>{ rtpvm.Method }</td>
+						<td>
+							<button
+								class="btn btn-secondary"
+								hx-delete={ string(
+                                            templ.URL(
+                                            fmt.Sprintf("/roles/%d/permissions", rtpvm.ID),
+                                            ),
+                                        ) }
+								hx-vals={ func() string {
+                                        permission := map[string]string{"path": rtpvm.Path, "method": rtpvm.Method}
+                                        bytes, _ := json.Marshal(permission)
+                                        return string(bytes)
+                                    }() }
+							>
+								Delete
+							</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+templ RolesPage(rpp RolesPageProps) {
+	@layouts.Base() {
+		<div class="prose mx-auto">
+			<h1 class="text-center">Application Roles</h1>
+		</div>
+		@PermissionForm(rpp.Pfvm)
+		<div class="flex justify-center">
+			<input
+				type="text"
+				class="input input-bordered w-64 mx-auto"
+				placeholder="Filter permissions and roles"
+				_="on keyup show <tr /> in next <table /> when its innerHTML contains my value"
+			/>
+		</div>
+		@PermissionsTable(rpp.Rtpvms)
+	}
+}

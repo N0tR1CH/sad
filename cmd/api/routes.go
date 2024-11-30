@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/N0tR1CH/sad/cmd/web"
+	"github.com/N0tR1CH/sad/internal/data"
 	"github.com/N0tR1CH/sad/views"
 	"github.com/N0tR1CH/sad/views/components"
 	"github.com/N0tR1CH/sad/views/pages"
@@ -37,28 +38,35 @@ func (app *application) routes() http.Handler {
 	app.discussionsRoutes(r)
 	app.usersRoutes(r)
 	app.categoriesRoutes(r)
+	app.rolesRoutes(r)
 
-	r.GET("/routes", getRoutes(r))
+	r.GET("/routes", app.getRoutes(r))
 	return r
 }
 
-func getRoutes(e *echo.Echo) echo.HandlerFunc {
+func (app *application) getRoutes(e *echo.Echo) echo.HandlerFunc {
 	routes := e.Routes()
-	routesSlice := make([]pages.RouteProp, 0, len(routes))
+	app.permissions = make([]data.Permission, 0, len(routes)+1)
 	for _, route := range routes {
-		routesSlice = append(
-			routesSlice,
-			pages.RouteProp{
+		app.permissions = append(
+			app.permissions,
+			data.Permission{
 				Path:   route.Path,
 				Method: route.Method,
 			},
 		)
 	}
+	app.permissions = append(
+		app.permissions,
+		data.Permission{Path: "/routes", Method: "GET"},
+	)
 	return func(c echo.Context) error {
 		return views.Render(
 			c,
 			http.StatusOK,
-			pages.Routes(pages.NewRoutesProps(routesSlice)),
+			pages.Routes(
+				pages.NewRoutesProps(app.permissions),
+			),
 		)
 	}
 }
@@ -163,4 +171,14 @@ func (app *application) categoriesRoutes(e *echo.Echo) {
 	g := e.Group("/categories")
 
 	g.GET("", app.getCategoriesHandler)
+}
+
+func (app *application) rolesRoutes(e *echo.Echo) {
+	g := e.Group("/roles")
+
+	g.GET("", app.getRolesHandler)
+
+	g.DELETE("/:id/permissions", app.deleteRolePermissionHandler)
+	g.GET("/permissions", app.getRolePermissionsHandler)
+	g.POST("/permissions", app.addRolePermissionsHandler)
 }

@@ -3,6 +3,7 @@ package pages
 import "github.com/N0tR1CH/sad/views/layouts"
 import "fmt"
 import "sort"
+import "github.com/N0tR1CH/sad/internal/data"
 
 type RouteProp struct {
 	Path   string
@@ -10,10 +11,10 @@ type RouteProp struct {
 }
 
 type RoutesProps struct {
-	routes []RouteProp
+	routes []data.Permission
 }
 
-func NewRoutesProps(routes []RouteProp) *RoutesProps {
+func NewRoutesProps(routes []data.Permission) *RoutesProps {
 	sort.Slice(routes, func(i, j int) bool {
 		return routes[i].Path < routes[j].Path
 	})

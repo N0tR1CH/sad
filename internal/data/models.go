@@ -36,6 +36,15 @@ type Models struct {
 	Categories interface {
 		GetAll() ([]Category, error)
 	}
+	Roles interface {
+		Roles(ID int) ([]Role, error)
+		RemovePermission(ID int, path, method string) error
+		PermissionsLeft(
+			ID int,
+			allPermissions Permissions,
+		) (Permissions, error)
+		AddPermission(ID int, permission string) error
+	}
 }
 
 func NewModels(db *sql.DB) Models {
@@ -44,5 +53,6 @@ func NewModels(db *sql.DB) Models {
 		Users:       UserModel{DB: db},
 		Tokens:      TokenModel{DB: db},
 		Categories:  CategoryModel{DB: db},
+		Roles:       RoleModel{DB: db},
 	}
 }
