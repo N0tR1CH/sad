@@ -200,6 +200,7 @@ templ DiscussionFormErrors(messages []string) {
 }
 
 type DiscussionCardViewModel struct {
+	Id        int
 	ImgSrc    string
 	CardTitle string
 }
@@ -262,9 +263,42 @@ templ DiscussionCard(discussionCardViewModel DiscussionCardViewModel, isPreview 
 			<h2 class="card-title">{ discussionCardViewModel.CardTitle }</h2>
 			if !isPreview {
 				<div class="card-actions justify-end">
-					<button class="btn btn-primary">Discuss</button>
+					<button
+						class="btn btn-primary"
+						hx-get={ string(templ.URL(fmt.Sprintf("/discussions/%d", discussionCardViewModel.Id))) }
+						hx-target="#app-main-container"
+						hx-push-url="true"
+					>
+						Discuss
+					</button>
 				</div>
 			}
 		</div>
 	</div>
+}
+
+type DiscussionViewModel struct {
+	Id          int
+	Title       string
+	Description templ.Component
+}
+
+templ Discussion(dvm DiscussionViewModel) {
+	<div class="card bg-base-300 rounded-box grid place-items-center py-4 my-2">
+		@DiscussionTop()
+		<div class="prose py-4">
+			<h1 class="text-center">{ dvm.Title }</h1>
+			@dvm.Description
+		</div>
+	</div>
+}
+
+templ DiscussionTop() {
+	<div class="avatar py-4">
+		<div class="w-16 rounded-full">
+			<img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"/>
+		</div>
+	</div>
+	<p>created by USERNAME</p>
+	<p>1st december 2024</p>
 }

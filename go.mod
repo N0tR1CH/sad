@@ -17,6 +17,7 @@ require (
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/shareed2k/go_limiter v0.0.9-0.20240229131048-52afdeaae893
 	github.com/wneessen/go-mail v0.4.4
+	github.com/yuin/goldmark v1.4.13
 	golang.org/x/crypto v0.27.0
 	golang.org/x/net v0.24.0
 )

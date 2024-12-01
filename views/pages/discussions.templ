@@ -11,3 +11,13 @@ templ NewDiscussionPage(dfp components.DiscussionFormProps) {
 		@components.DiscussionForm(dfp)
 	}
 }
+
+type DiscussionPageProps struct {
+	Dvm components.DiscussionViewModel
+}
+
+templ DiscussionPage(dpp DiscussionPageProps) {
+	@layouts.Base() {
+		@components.Discussion(dpp.Dvm)
+	}
+}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/yuin/goldmark"
 )
 
 func (app *application) newDiscussionHandler(c echo.Context) error {
@@ -78,6 +80,7 @@ func (app *application) getDiscussionsHandler(c echo.Context) error {
 		dcvms[i] = components.DiscussionCardViewModel{
 			ImgSrc:    discussions[i].PreviewSrc,
 			CardTitle: discussions[i].Title,
+			Id:        discussions[i].ID,
 		}
 	}
 
@@ -92,7 +95,53 @@ func (app *application) getDiscussionsHandler(c echo.Context) error {
 }
 
 func (app *application) getDiscussionHandler(c echo.Context) error {
-	return c.String(http.StatusOK, "discussion")
+	var input struct {
+		Id string `param:"id" validate:"number,required"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return err
+	}
+	if err := c.Validate(&input); err != nil {
+		return err
+	}
+	discussionId, err := strconv.Atoi(input.Id)
+	if err != nil {
+		return err
+	}
+
+	d, err := app.models.Discussions.Get(int64(discussionId))
+	if err != nil {
+		app.sessionManager.Put(
+			c.Request().Context(),
+			"alert",
+			components.AlertProps{
+				Title: "No discussion!",
+				Text:  "Sorry but this discussion does not exist",
+				Icon:  components.Warning,
+			},
+		)
+		return c.Redirect(http.StatusTemporaryRedirect, "/")
+	}
+
+	dvm := components.DiscussionViewModel{Title: d.Title}
+	var buf bytes.Buffer
+	if err := goldmark.Convert([]byte(d.Description), &buf); err != nil {
+		return err
+	}
+	dvm.Description = views.Unsafe(buf.String())
+
+	if c.Get("HTMX").(bool) {
+		return views.Render(
+			c,
+			http.StatusOK,
+			components.Discussion(dvm),
+		)
+	}
+	return views.Render(
+		c,
+		http.StatusOK,
+		pages.DiscussionPage(pages.DiscussionPageProps{Dvm: dvm}),
+	)
 }
 
 func (app *application) createDiscussionHandler(c echo.Context) error {

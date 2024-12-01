@@ -1,6 +1,8 @@
 package views
 
 import (
+	"io"
+
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/net/context"
@@ -25,4 +27,11 @@ func Render(c echo.Context, statusCode int, t templ.Component) error {
 	}
 
 	return c.HTML(statusCode, buf.String())
+}
+
+func Unsafe(html string) templ.Component {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) (err error) {
+		_, err = io.WriteString(w, html)
+		return
+	})
 }

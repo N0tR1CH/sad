@@ -1,7 +1,9 @@
 package data
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -42,7 +44,41 @@ func (dm DiscussionModel) Insert(discussion *Discussion) error {
 }
 
 func (dm DiscussionModel) Get(id int64) (*Discussion, error) {
-	return nil, nil
+	var d Discussion
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	query := `
+		SELECT
+			id,
+			created_at,
+			updated_at,
+			url,
+			title,
+			description,
+			preview_src,
+			category_id
+		FROM
+			discussions
+		WHERE id=$1
+	`
+	if err := dm.DB.QueryRowContext(ctx, query, &id).Scan(
+		&d.ID,
+		&d.CreatedAt,
+		&d.UpdatedAt,
+		&d.Url,
+		&d.Title,
+		&d.Description,
+		&d.PreviewSrc,
+		&d.CategoryID,
+	); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return &d, nil
 }
 
 func (dm DiscussionModel) GetAll(category string, page int) ([]Discussion, error) {
