@@ -144,9 +144,23 @@ func (rm RoleModel) AddPermission(ID int, permission string) error {
 		WHERE id=$2
 	`
 	args := []any{&permission, &ID}
-	_, err := rm.DB.ExecContext(ctx, query, args...)
-	if err != nil {
+	if _, err := rm.DB.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("in RoleModel#AddPermission: %w", err)
+	}
+	return nil
+}
+
+func (rm RoleModel) AssignAdminAllPermissions(allPermissions Permissions) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	bytes, err := json.Marshal(allPermissions)
+	if err != nil {
+		return err
+	}
+	json := string(bytes)
+	query := "UPDATE roles SET permissions = $1::JSONB WHERE name='admin'"
+	if _, err := rm.DB.ExecContext(ctx, query, &json); err != nil {
+		return fmt.Errorf("in RoleModel#AssignAdminAllPermissions: %w", err)
 	}
 	return nil
 }

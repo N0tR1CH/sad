@@ -44,6 +44,7 @@ type Models struct {
 			allPermissions Permissions,
 		) (Permissions, error)
 		AddPermission(ID int, permission string) error
+		AssignAdminAllPermissions(allPermissions Permissions) error
 	}
 }
 

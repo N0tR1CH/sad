@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/N0tR1CH/sad/cmd/web"
 	"github.com/N0tR1CH/sad/internal/data"
@@ -60,6 +61,12 @@ func (app *application) getRoutes(e *echo.Echo) echo.HandlerFunc {
 		app.permissions,
 		data.Permission{Path: "/routes", Method: "GET"},
 	)
+	if err := app.models.Roles.AssignAdminAllPermissions(
+		app.permissions,
+	); err != nil {
+		app.logger.Error("database problem", "err", err)
+		os.Exit(exitFailure)
+	}
 	return func(c echo.Context) error {
 		return views.Render(
 			c,
