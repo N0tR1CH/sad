@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -16,6 +17,7 @@ type Discussion struct {
 	Title       string
 	Description string
 	PreviewSrc  string
+	UserId      int
 }
 
 type DiscussionModel struct {
@@ -24,23 +26,40 @@ type DiscussionModel struct {
 
 func (dm DiscussionModel) Insert(discussion *Discussion) error {
 	query := `
-		INSERT INTO discussions (url, title, description, preview_src, category_id)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, created_at, updated_at, category_id
+		INSERT INTO discussions (url, title, description, preview_src, category_id, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, created_at, updated_at, category_id, user_id
 	`
+	var userID sql.NullInt64
+	if discussion.UserId != 0 {
+		userID = sql.NullInt64{Int64: int64(discussion.UserId), Valid: true}
+	} else {
+		userID = sql.NullInt64{Valid: false}
+	}
 	queryArgs := []any{
 		discussion.Url,
 		discussion.Title,
 		discussion.Description,
 		discussion.PreviewSrc,
 		discussion.CategoryID,
+		userID,
 	}
-	return dm.DB.QueryRow(query, queryArgs...).Scan(
+	if err := dm.DB.QueryRow(query, queryArgs...).Scan(
 		&discussion.ID,
 		&discussion.CreatedAt,
 		&discussion.UpdatedAt,
 		&discussion.CategoryID,
-	)
+		&userID,
+	); err != nil {
+		return fmt.Errorf("in DiscussionModel#Insert: %w", err)
+	}
+
+	if userID.Valid == false {
+		discussion.UserId = 0
+	} else {
+		discussion.UserId = int(userID.Int64)
+	}
+	return nil
 }
 
 func (dm DiscussionModel) Get(id int64) (*Discussion, error) {
@@ -56,7 +75,8 @@ func (dm DiscussionModel) Get(id int64) (*Discussion, error) {
 			title,
 			description,
 			preview_src,
-			category_id
+			category_id,
+			COALESCE(user_id, 0)
 		FROM
 			discussions
 		WHERE id=$1
@@ -70,6 +90,7 @@ func (dm DiscussionModel) Get(id int64) (*Discussion, error) {
 		&d.Description,
 		&d.PreviewSrc,
 		&d.CategoryID,
+		&d.UserId,
 	); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):

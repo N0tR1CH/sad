@@ -22,6 +22,7 @@ type Models struct {
 	Users interface {
 		Insert(user *User) error
 		GetByEmail(email string) (*User, error)
+		GetUsername(id int) (string, error)
 		Update(user *User) error
 		GetForToken(scope string, plainTextToken string) (*User, error)
 		Exists(id int) (bool, error)

@@ -281,11 +281,17 @@ type DiscussionViewModel struct {
 	Id          int
 	Title       string
 	Description templ.Component
+	ResourceUrl string
+	Dtvm        DiscussionTopViewModel
 }
 
 templ Discussion(dvm DiscussionViewModel) {
 	<div class="card bg-base-300 rounded-box grid place-items-center py-4 my-2">
-		@DiscussionTop()
+		@DiscussionTop(dvm.Dtvm)
+		<a
+			class="link link-info"
+			href={ templ.SafeURL(dvm.ResourceUrl) }
+		>Go to discussed resource</a>
 		<div class="prose py-4">
 			<h1 class="text-center">{ dvm.Title }</h1>
 			@dvm.Description
@@ -293,12 +299,32 @@ templ Discussion(dvm DiscussionViewModel) {
 	</div>
 }
 
-templ DiscussionTop() {
-	<div class="avatar py-4">
-		<div class="w-16 rounded-full">
-			<img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"/>
+type DiscussionTopViewModel struct {
+	Date     string
+	ImgSrc   string
+	Username string
+}
+
+templ DiscussionTop(dtvm DiscussionTopViewModel) {
+	if dtvm.ImgSrc != "" {
+		<div class="avatar py-4">
+			<div class="w-16 rounded-full">
+				<img
+					src={ dtvm.ImgSrc }
+				/>
+			</div>
 		</div>
-	</div>
-	<p>created by USERNAME</p>
-	<p>1st december 2024</p>
+	}
+	<p>
+		created by
+		<b>
+			{ func()string {
+        if dtvm.Username != "" {
+            return dtvm.Username
+        }
+        return "Guest"
+    }() }
+		</b>
+	</p>
+	<p>on <b>{ dtvm.Date }</b></p>
 }

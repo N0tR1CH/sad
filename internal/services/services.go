@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/chromedp/cdproto/emulation"
 	"github.com/chromedp/chromedp"
@@ -31,7 +32,9 @@ type ChromeDpService struct {
 }
 
 func (cds ChromeDpService) GenScreenshot(url string) (string, error) {
-	ctx, cancel := chromedp.NewContext(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	ctx, cancel = chromedp.NewContext(ctx)
 	defer cancel()
 
 	var buf []byte

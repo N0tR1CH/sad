@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/N0tR1CH/sad/internal/data"
 	"github.com/N0tR1CH/sad/views"
@@ -111,6 +112,7 @@ func (app *application) getDiscussionHandler(c echo.Context) error {
 
 	d, err := app.models.Discussions.Get(int64(discussionId))
 	if err != nil {
+		app.logger.Error("in app#getDiscussionHandler", "error", err.Error())
 		app.sessionManager.Put(
 			c.Request().Context(),
 			"alert",
@@ -123,7 +125,24 @@ func (app *application) getDiscussionHandler(c echo.Context) error {
 		return c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 
-	dvm := components.DiscussionViewModel{Title: d.Title}
+	imgSrc, err := app.models.Users.AvatarSrcByID(d.UserId)
+	if err != nil {
+		return err
+	}
+	username, err := app.models.Users.GetUsername(d.UserId)
+	if err != nil {
+		return err
+	}
+
+	dvm := components.DiscussionViewModel{
+		Title:       d.Title,
+		ResourceUrl: d.Url,
+		Dtvm: components.DiscussionTopViewModel{
+			Date:     d.CreatedAt.Format(time.ANSIC),
+			ImgSrc:   imgSrc,
+			Username: username,
+		},
+	}
 	var buf bytes.Buffer
 	if err := goldmark.Convert([]byte(d.Description), &buf); err != nil {
 		return err
@@ -140,7 +159,9 @@ func (app *application) getDiscussionHandler(c echo.Context) error {
 	return views.Render(
 		c,
 		http.StatusOK,
-		pages.DiscussionPage(pages.DiscussionPageProps{Dvm: dvm}),
+		pages.DiscussionPage(
+			pages.DiscussionPageProps{Dvm: dvm},
+		),
 	)
 }
 
@@ -206,12 +227,12 @@ func (app *application) createDiscussionHandler(c echo.Context) error {
 			components.DiscussionFormErrors([]string{"Problem with the server"}),
 		)
 	}
-
 	d := &data.Discussion{
 		Title:       input.Title,
 		Url:         input.Url,
 		Description: input.Description,
 		PreviewSrc:  previewSrc,
+		UserId:      c.Get("userID").(int),
 	}
 
 	cID, err := strconv.Atoi(input.CategoryId)
@@ -346,7 +367,7 @@ func (app *application) genDiscussionPreview(c echo.Context) error {
 
 	resPath, err := app.services.ChromeDp.GenScreenshot(input.Url)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Couldn't generate preview")
+		return c.String(http.StatusBadRequest, "Couldn't generate preview")
 	}
 
 	return views.Render(

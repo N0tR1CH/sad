@@ -34,6 +34,20 @@ type UserModel struct {
 	DB *sql.DB
 }
 
+func (um UserModel) GetUsername(id int) (string, error) {
+	var username string
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	q := "SELECT name FROM users WHERE id=$1"
+	if err := um.DB.QueryRowContext(ctx, q, &id).Scan(&username); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", nil
+		}
+		return "", err
+	}
+	return username, nil
+}
+
 func (um UserModel) GetForToken(scope string, plainTextToken string) (*User, error) {
 	var u User
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -182,6 +196,9 @@ func (um UserModel) AvatarSrcByID(id int) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	if err := um.DB.QueryRowContext(ctx, query, &id).Scan(&src); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", nil
+		}
 		return "", err
 	}
 	return src, nil
