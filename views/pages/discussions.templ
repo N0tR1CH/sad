@@ -3,6 +3,8 @@ package pages
 import (
 	"github.com/N0tR1CH/sad/views/components"
 	"github.com/N0tR1CH/sad/views/layouts"
+	"fmt"
+	"time"
 )
 
 templ NewDiscussionPage(dfp components.DiscussionFormProps) {
@@ -18,6 +20,167 @@ type DiscussionPageProps struct {
 
 templ DiscussionPage(dpp DiscussionPageProps) {
 	@layouts.Base() {
-		@components.Discussion(dpp.Dvm)
+		@DiscussionPageBody(dpp)
 	}
+}
+
+templ DiscussionPageBody(dpp DiscussionPageProps) {
+	<div>
+		@components.Discussion(dpp.Dvm)
+		<div class="divider"></div>
+		@commentInput(dpp.Dvm.Id)
+		<section
+			id="discussion-comments"
+			class="space-y-2 my-4"
+			hx-get={ string(templ.URL(fmt.Sprintf("/discussions/%d/comments", dpp.Dvm.Id))) }
+			hx-trigger="load"
+			hx-swap="innerHTML"
+		></section>
+	</div>
+}
+
+templ commentInput(discussionId int) {
+	<div class="flex flex-col items-start mx-2 gap-y-2">
+		<textarea
+			id="comment-input"
+			class="textarea textarea-bordered w-full"
+			name="content"
+			placeholder="Write a comment..."
+		></textarea>
+		<button
+			class="btn btn-primary"
+			hx-post={ string(templ.URL(fmt.Sprintf("/discussions/%d/comments/create", discussionId))) }
+			hx-target="#discussion-comments"
+			hx-swap="afterbegin"
+			hx-include="[name='content']"
+			hx-trigger="click delay:200ms"
+			_="
+                on htmx:afterRequest
+                    if event.detail.successful
+                        set #comment-input.value to ''
+                        runToast('success', 'Comment was succesfully inserted into the dicussion')
+                    else
+                        runToast('error', 'Comment could not be inserted into the dicussion')
+                    end
+                end
+            "
+			if token, ok := ctx.Value("csrf").(string); ok {
+				hx-headers={ components.TokenCSRF(token) }
+			}
+		>
+			Add Comment
+		</button>
+	</div>
+}
+
+type CommentViewModel struct {
+	username string
+	ctvm     commentTimeViewModel
+	imgSrc   string
+	content  string
+}
+
+type commentTimeViewModel struct {
+	datetime string
+	title    string
+	content  string
+}
+
+templ Comments(cvms []CommentViewModel) {
+	for _, cvm := range cvms {
+		@Comment(cvm)
+	}
+}
+
+func NewCommentViewModel(
+	username,
+	imgSrc,
+	content string,
+	t time.Time,
+) CommentViewModel {
+	dayWithSuffix := func(day int) string {
+		if day%100 >= 11 && 100 <= 13 {
+			return fmt.Sprintf("%dth", day)
+		}
+
+		switch day % 10 {
+		case 1:
+			return fmt.Sprintf("%dst", day)
+		case 2:
+			return fmt.Sprintf("%dnd", day)
+		case 3:
+			return fmt.Sprintf("%drd", day)
+		default:
+			return fmt.Sprintf("%dth", day)
+		}
+	}
+
+	ctvm := commentTimeViewModel{
+		datetime: fmt.Sprintf(
+			"%d-%02d-%02d",
+			t.Year(), t.Month(), t.Day(),
+		),
+		title: fmt.Sprintf(
+			"%s %s, %d",
+			t.Month().String(), dayWithSuffix(t.Day()), t.Year(),
+		),
+		content: fmt.Sprintf(
+			"%s. %d, %d",
+			t.Month().String()[:3], t.Day(), t.Year(),
+		),
+	}
+	return CommentViewModel{
+		username: func() string {
+			if username == "" {
+				return "Guest"
+			}
+			return username
+		}(),
+		imgSrc:  imgSrc,
+		ctvm:    ctvm,
+		content: content,
+	}
+}
+
+templ Comment(cvm CommentViewModel) {
+	<article class="p-2 text-base rounded-lg">
+		<footer class="flex justify-between items-center mb-2">
+			<div class="flex items-center">
+				<p class="inline-flex items-center mr-3 text-sm text-gray-900 dark:text-white font-semibold">
+					if cvm.imgSrc != "" {
+						<img
+							class="mr-2 w-6 h-6 rounded-full"
+							src={ cvm.imgSrc }
+							alt={ cvm.username }
+						/>
+					}
+					if cvm.username == "" {
+						Guest
+					} else {
+						{ cvm.username }
+					}
+				</p>
+				<p class="text-sm">
+					<time
+						pubdate
+						datetime={ cvm.ctvm.datetime }
+						title={ cvm.ctvm.title }
+					>{ cvm.ctvm.content }</time>
+				</p>
+			</div>
+			<details class="dropdown">
+				<summary class="btn m-1">
+					<svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 3">
+						<path d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"></path>
+					</svg>
+				</summary>
+				<ul class="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+					<li><a>Reply</a></li>
+					<li><a>Report</a></li>
+					<li><a>Delete</a></li>
+				</ul>
+			</details>
+		</footer>
+		<p>{ cvm.content }</p>
+	</article>
 }

@@ -47,6 +47,10 @@ type Models struct {
 		AddPermission(ID int, permission string) error
 		AssignAdminAllPermissions(allPermissions Permissions) error
 	}
+	Comments interface {
+		Insert(comment *Comment) error
+		GetAllWithUser(discussionId int) (Comments, error)
+	}
 }
 
 func NewModels(db *sql.DB) Models {
@@ -56,5 +60,6 @@ func NewModels(db *sql.DB) Models {
 		Tokens:      TokenModel{DB: db},
 		Categories:  CategoryModel{DB: db},
 		Roles:       RoleModel{DB: db},
+		Comments:    CommentModel{DB: db},
 	}
 }

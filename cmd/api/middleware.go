@@ -9,9 +9,7 @@ import (
 	"time"
 
 	"github.com/N0tR1CH/sad/rate_limiter"
-	"github.com/N0tR1CH/sad/views"
 	"github.com/N0tR1CH/sad/views/components"
-	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/redis/go-redis/v9"
@@ -154,7 +152,8 @@ func (app *application) authorize(next echo.HandlerFunc) echo.HandlerFunc {
 					Icon:  components.Error,
 				},
 			)
-			return c.Redirect(http.StatusTemporaryRedirect, "/")
+			c.Response().Header().Set("HX-Redirect", "/")
+			return c.NoContent(http.StatusOK)
 		}
 		return next(c)
 	}
@@ -180,7 +179,4 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Use(app.userIdExtraction)
 	e.Use(app.authorize)
 	e.Use(addHtmxToContext)
-	e.RouteNotFound("/*", func(c echo.Context) error {
-		return views.Render(c, http.StatusNotFound, pages.Page404())
-	})
 }

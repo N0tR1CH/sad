@@ -26,10 +26,10 @@ func (app *application) routes() http.Handler {
 
 	staticFilesHandler := app.staticFilesHandler()
 
+	r.GET("/", app.homeHandler)
 	r.Static("/public", "cmd/web/public")
 	r.GET("/static/*", echo.WrapHandler(staticFilesHandler))
 	r.GET("/healthcheck", app.healthcheckhandler)
-	r.GET("/", app.homeHandler)
 	r.GET("/login", app.loginHandler)
 	r.GET("/register", func(c echo.Context) error {
 		return c.Redirect(http.StatusTemporaryRedirect, "/login")
@@ -124,6 +124,15 @@ func (app *application) discussionsRoutes(e *echo.Echo) {
 	g.GET("/url", app.validateDiscussionUrlHandler)
 	// Generating discussion card preview
 	g.GET("/preview", app.genDiscussionPreview)
+
+	app.commentsRoutes(g)
+}
+
+func (app *application) commentsRoutes(e *echo.Group) {
+	g := e.Group("/:discussionId/comments")
+
+	g.GET("", app.getCommentsHandler)
+	g.POST("/create", app.createCommentHandler)
 }
 
 // Create users group and sets its middleware.

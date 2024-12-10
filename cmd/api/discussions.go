@@ -135,6 +135,7 @@ func (app *application) getDiscussionHandler(c echo.Context) error {
 	}
 
 	dvm := components.DiscussionViewModel{
+		Id:          d.ID,
 		Title:       d.Title,
 		ResourceUrl: d.Url,
 		Dtvm: components.DiscussionTopViewModel{
@@ -153,7 +154,7 @@ func (app *application) getDiscussionHandler(c echo.Context) error {
 		return views.Render(
 			c,
 			http.StatusOK,
-			components.Discussion(dvm),
+			pages.DiscussionPageBody(pages.DiscussionPageProps{Dvm: dvm}),
 		)
 	}
 	return views.Render(

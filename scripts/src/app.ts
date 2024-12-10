@@ -16,6 +16,7 @@ declare global {
       el: HTMLElement,
       options: SweetAlertOptions,
     ) => Promise<void>;
+    runToast: (icon: string, title: string) => Promise<void>;
   }
 }
 
@@ -39,6 +40,21 @@ window.addEventListener("DOMContentLoaded", async (): Promise<void> => {
   Alpine.start();
 
   _hyperscript.browserInit();
+
+  // toast helper
+  window.runToast = async (icon: string, title: string): Promise<void> => {
+    Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.onmouseenter = Swal.stopTimer;
+        toast.onmouseleave = Swal.resumeTimer;
+      },
+    }).fire({ icon, title });
+  };
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
