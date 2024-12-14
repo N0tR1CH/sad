@@ -115,7 +115,12 @@ func (app *application) getCommentsHandler(c echo.Context) error {
 		)
 		return err
 	}
-	comments, err := app.models.Comments.GetAllWithUser(discussionId)
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if err != nil {
+		page = 1
+	}
+
+	comments, currCommCount, err := app.models.Comments.GetAllWithUser(discussionId, page)
 	if err != nil {
 		app.logger.Error(
 			"in app#getCommentHandler: while getting all discussions",
@@ -141,6 +146,6 @@ func (app *application) getCommentsHandler(c echo.Context) error {
 	return views.Render(
 		c,
 		http.StatusOK,
-		pages.Comments(cvms),
+		pages.Comments(cvms, discussionId, page+1, currCommCount),
 	)
 }

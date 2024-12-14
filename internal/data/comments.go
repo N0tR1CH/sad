@@ -53,7 +53,7 @@ func (cm CommentModel) Insert(c *Comment) error {
 	return nil
 }
 
-func (cm CommentModel) GetAllWithUser(discussionId int) (Comments, error) {
+func (cm CommentModel) GetAllWithUser(discussionId int, page int) (Comments, int, error) {
 	q := `
 		SELECT
 			c.id,
@@ -67,13 +67,17 @@ func (cm CommentModel) GetAllWithUser(discussionId int) (Comments, error) {
 		FROM comments c
 			INNER JOIN users u ON c.user_id=u.id
 		WHERE discussion_id=$1 OR $1=0
+		ORDER BY c.created_at DESC
+		LIMIT 10
+		OFFSET $2
 	`
-	args := []any{&discussionId}
+	offset := (page - 1) * 10
+	args := []any{&discussionId, &offset}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	rows, err := cm.DB.QueryContext(ctx, q, args...)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, 0, fmt.Errorf(
 			"in CommentModel#GetAll while querying: %w",
 			err,
 		)
@@ -92,12 +96,21 @@ func (cm CommentModel) GetAllWithUser(discussionId int) (Comments, error) {
 			&c.U.Name,
 			&c.U.AvatarSrc,
 		); err != nil {
-			return comments, fmt.Errorf(
+			return comments, 0, fmt.Errorf(
 				"in CommentModel#Get while mapping fields: %w",
 				err,
 			)
 		}
 		comments = append(comments, c)
 	}
-	return comments, nil
+
+	var commsCount int
+	if err := cm.DB.QueryRow(
+		"SELECT COUNT(*) FROM comments WHERE discussion_id=$1",
+		&discussionId,
+	).Scan(&commsCount); err != nil {
+		return nil, 0, err
+	}
+	currCommCount := commsCount - ((page-1)*10 + len(comments))
+	return comments, currCommCount, nil
 }

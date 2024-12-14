@@ -32,9 +32,14 @@ templ DiscussionPageBody(dpp DiscussionPageProps) {
 		<section
 			id="discussion-comments"
 			class="space-y-2 my-4"
-			hx-get={ string(templ.URL(fmt.Sprintf("/discussions/%d/comments", dpp.Dvm.Id))) }
-			hx-trigger="load"
+			hx-get={ string(templ.URL(fmt.Sprintf("/discussions/%d/comments?page=1", dpp.Dvm.Id))) }
+			hx-trigger="load, getComms"
 			hx-swap="innerHTML"
+			_="
+                on htmx:afterRequest
+                    send refreshBtnStopSpin to #refresh-btn
+                end
+            "
 		></section>
 	</div>
 }
@@ -47,14 +52,15 @@ templ commentInput(discussionId int) {
 			name="content"
 			placeholder="Write a comment..."
 		></textarea>
-		<button
-			class="btn btn-primary"
-			hx-post={ string(templ.URL(fmt.Sprintf("/discussions/%d/comments/create", discussionId))) }
-			hx-target="#discussion-comments"
-			hx-swap="afterbegin"
-			hx-include="[name='content']"
-			hx-trigger="click delay:200ms"
-			_="
+		<div class="flex items-center">
+			<button
+				class="btn btn-primary"
+				hx-post={ string(templ.URL(fmt.Sprintf("/discussions/%d/comments/create", discussionId))) }
+				hx-target="#discussion-comments"
+				hx-swap="afterbegin"
+				hx-include="[name='content']"
+				hx-trigger="click delay:200ms"
+				_="
                 on htmx:afterRequest
                     if event.detail.successful
                         set #comment-input.value to ''
@@ -64,12 +70,14 @@ templ commentInput(discussionId int) {
                     end
                 end
             "
-			if token, ok := ctx.Value("csrf").(string); ok {
-				hx-headers={ components.TokenCSRF(token) }
-			}
-		>
-			Add Comment
-		</button>
+				if token, ok := ctx.Value("csrf").(string); ok {
+					hx-headers={ components.TokenCSRF(token) }
+				}
+			>
+				Add Comment
+			</button>
+			@refreshBtn()
+		</div>
 	</div>
 }
 
@@ -86,9 +94,22 @@ type commentTimeViewModel struct {
 	content  string
 }
 
-templ Comments(cvms []CommentViewModel) {
+templ Comments(cvms []CommentViewModel, discussionId int, page int, currCommCount int) {
 	for _, cvm := range cvms {
 		@Comment(cvm)
+	}
+	if currCommCount > 0 {
+		<div
+			hx-get={ string(templ.URL(fmt.Sprintf("/discussions/%d/comments?page=%d", discussionId, page))) }
+			hx-trigger="revealed"
+			hx-swap="outerHTML"
+			hx-indicator="#more-comments-loading-bar"
+		>
+			<div
+				class="divider"
+			></div>
+			<span id="more-comments-loading-bar" class="loading loading-bars loading-lg"></span>
+		</div>
 	}
 }
 
@@ -183,4 +204,32 @@ templ Comment(cvm CommentViewModel) {
 		</footer>
 		<p>{ cvm.content }</p>
 	</article>
+}
+
+templ refreshBtn() {
+	<button
+		id="refresh-btn"
+		_="
+        on click
+            send getComms to #discussion-comments
+            add .animate-spin on me
+        end
+
+        on refreshBtnStopSpin
+            remove .animate-spin from me
+        end
+    "
+	>
+		<svg
+			class="fill-primary"
+			xmlns="http://www.w3.org/2000/svg"
+			height="48px"
+			viewBox="0 -960 960 960"
+			width="48px"
+		>
+			<path
+				d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"
+			></path>
+		</svg>
+	</button>
 }

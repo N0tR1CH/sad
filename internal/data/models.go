@@ -49,7 +49,7 @@ type Models struct {
 	}
 	Comments interface {
 		Insert(comment *Comment) error
-		GetAllWithUser(discussionId int) (Comments, error)
+		GetAllWithUser(discussionId int, page int) (Comments, int, error)
 	}
 }
 
