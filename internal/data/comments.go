@@ -82,7 +82,12 @@ func (cm CommentModel) GetAllWithUser(discussionId int, page int) (Comments, int
 			err,
 		)
 	}
-	defer rows.Close()
+	defer func() {
+		rcErr := rows.Close()
+		if rcErr != nil && err == nil {
+			err = rcErr
+		}
+	}()
 	var comments Comments
 	for rows.Next() {
 		var c Comment

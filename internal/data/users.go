@@ -103,7 +103,12 @@ func (um UserModel) Insert(user *User) error {
 	if err != nil {
 		return fmt.Errorf("In UserModel#Insert: %w", err)
 	}
-	defer stmt.Close()
+	defer func() {
+		scErr := stmt.Close()
+		if scErr != nil && err == nil {
+			err = scErr
+		}
+	}()
 	args := []any{
 		user.Name,
 		user.Email,
@@ -164,7 +169,12 @@ func (um UserModel) GetByEmail(email string) (*User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("In UserModel#GetByEmail: %w", err)
 	}
-	defer stmt.Close()
+	defer func() {
+		scErr := stmt.Close()
+		if scErr != nil && err == nil {
+			err = scErr
+		}
+	}()
 	args := []any{email}
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()

@@ -236,7 +236,9 @@ func (app *application) createUserHandler(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		defer src.Close()
+		defer func() {
+			err = src.Close()
+		}()
 		fileBytes, err := io.ReadAll(src)
 		if err != nil {
 			return err
@@ -248,7 +250,9 @@ func (app *application) createUserHandler(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		f.Write(webpImgBytes)
+		defer func() {
+			_, err = f.Write(webpImgBytes)
+		}()
 	}
 
 	if err := c.Bind(&input); err != nil {

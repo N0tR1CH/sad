@@ -73,7 +73,7 @@ func (app *application) getDiscussionsHandler(c echo.Context) error {
 				cps[i].Active = true
 			}
 		}
-		views.Render(c, http.StatusOK, components.CategoriesOob(cps))
+		_ = views.Render(c, http.StatusOK, components.CategoriesOob(cps))
 	}
 
 	dcvms := make([]components.DiscussionCardViewModel, len(discussions))

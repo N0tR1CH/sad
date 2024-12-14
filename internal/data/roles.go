@@ -55,7 +55,12 @@ func (rm RoleModel) Roles(ID int) ([]Role, error) {
 	if err != nil {
 		return nil, fmt.Errorf("in RoleModel#Roles: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		rcErr := rows.Close()
+		if rcErr != nil && err == nil {
+			err = rcErr
+		}
+	}()
 
 	roles := make([]Role, 0)
 	for rows.Next() {

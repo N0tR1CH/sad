@@ -127,7 +127,12 @@ func (dm DiscussionModel) GetAll(category string, page int) ([]Discussion, error
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		rcErr := rows.Close()
+		if rcErr != nil && err == nil {
+			err = rcErr
+		}
+	}()
 
 	var discussions []Discussion
 

@@ -237,7 +237,9 @@ func main() {
 		logger.Error("database problem", "err", err)
 		os.Exit(exitFailure)
 	}
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 	logger.Info(
 		"database connection opened",
 		"dbStats",
