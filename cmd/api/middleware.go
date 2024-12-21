@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/N0tR1CH/sad/rate_limiter"
+	"github.com/N0tR1CH/sad/views"
 	"github.com/N0tR1CH/sad/views/components"
+	"github.com/N0tR1CH/sad/views/pages"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/redis/go-redis/v9"
@@ -119,30 +121,29 @@ func (app *application) userIdExtraction(next echo.HandlerFunc) echo.HandlerFunc
 
 func (app *application) authorize(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		app.logger.Info("app#authorize",
-			"method", c.Request().Method,
-			"path", c.Path(),
-		)
-		bytes, _ := json.Marshal(
-			[]map[string]string{
-				{
-					"path":   c.Path(),
-					"method": c.Request().Method,
-				},
-			},
-		)
-		permission := string(bytes)
-		authorized, err := app.models.Users.Authorized(
-			c.Get("userID").(int),
-			permission,
+		path := c.Path()
+		method := c.Request().Method
+		// Not found paths are echo concept and they
+		// do not require permission checks
+		if path[len(path)-1] == '*' {
+			return next(c)
+		}
+		app.logger.Info("app#authorize", "method", method, "path", path)
+		bytes, err := json.Marshal(
+			[]map[string]string{{"path": path, "method": method}},
 		)
 		if err != nil {
-			app.logger.Error("app#authorize", "err", err.Error())
-			return err
+			return c.Redirect(http.StatusTemporaryRedirect, "/")
+		}
+		userID := c.Get("userID").(int)
+		permission := string(bytes)
+		authorized, err := app.models.Users.Authorized(userID, permission)
+		if err != nil {
+			return fmt.Errorf("in app#authorize: %w", err)
 		}
 		if !authorized {
-			app.logger.Info("app#authorize", "userID", c.Get("userID").(int))
-			app.logger.Info("app#authorize", "Path", c.Path())
+			app.logger.Info("app#authorize", "userID", userID)
+			app.logger.Info("app#authorize", "Path", path)
 			app.sessionManager.Put(
 				c.Request().Context(),
 				"alert",
@@ -152,8 +153,7 @@ func (app *application) authorize(next echo.HandlerFunc) echo.HandlerFunc {
 					Icon:  components.Error,
 				},
 			)
-			c.Response().Header().Set("HX-Redirect", "/")
-			return c.NoContent(http.StatusOK)
+			return c.Redirect(http.StatusTemporaryRedirect, "/")
 		}
 		return next(c)
 	}
@@ -179,4 +179,7 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Use(app.userIdExtraction)
 	e.Use(app.authorize)
 	e.Use(addHtmxToContext)
+	e.RouteNotFound("/*", func(c echo.Context) error {
+		return views.Render(c, http.StatusNotFound, pages.Page404())
+	})
 }

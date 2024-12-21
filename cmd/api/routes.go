@@ -131,6 +131,10 @@ func (app *application) discussionsRoutes(e *echo.Echo) {
 func (app *application) commentsRoutes(e *echo.Group) {
 	g := e.Group("/:discussionId/comments")
 
+	g.RouteNotFound("/*", func(c echo.Context) error {
+		return views.Render(c, http.StatusNotFound, pages.Page404())
+	})
+
 	g.GET("", app.getCommentsHandler)
 	g.POST("/create", app.createCommentHandler)
 }
@@ -145,6 +149,9 @@ func (app *application) commentsRoutes(e *echo.Group) {
 func (app *application) usersRoutes(e *echo.Echo) {
 	g := e.Group("/users", echo.WrapMiddleware(app.sessionManager.LoadAndSave))
 
+	g.RouteNotFound("/*", func(c echo.Context) error {
+		return views.Render(c, http.StatusNotFound, pages.Page404())
+	})
 	// POST /users/create
 	g.POST("/create", app.createUserHandler)
 
@@ -186,11 +193,19 @@ func (app *application) usersRoutes(e *echo.Echo) {
 func (app *application) categoriesRoutes(e *echo.Echo) {
 	g := e.Group("/categories")
 
+	g.RouteNotFound("/*", func(c echo.Context) error {
+		return views.Render(c, http.StatusNotFound, pages.Page404())
+	})
+
 	g.GET("", app.getCategoriesHandler)
 }
 
 func (app *application) rolesRoutes(e *echo.Echo) {
 	g := e.Group("/roles")
+
+	g.RouteNotFound("/*", func(c echo.Context) error {
+		return views.Render(c, http.StatusNotFound, pages.Page404())
+	})
 
 	g.GET("", app.getRolesHandler)
 

@@ -103,7 +103,7 @@ func (app *application) getDiscussionHandler(c echo.Context) error {
 		return err
 	}
 	if err := c.Validate(&input); err != nil {
-		return err
+		return c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
 	discussionId, err := strconv.Atoi(input.Id)
 	if err != nil {
