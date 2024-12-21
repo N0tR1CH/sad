@@ -28,7 +28,9 @@ templ DiscussionPageBody(dpp DiscussionPageProps) {
 	<div>
 		@components.Discussion(dpp.Dvm)
 		<div class="divider"></div>
-		@commentInput(dpp.Dvm.Id)
+		if id, ok := ctx.Value("userID").(int); ok && id != 0 {
+			@commentInput(dpp.Dvm.Id)
+		}
 		<section
 			id="discussion-comments"
 			class="space-y-2 my-4"
