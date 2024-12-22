@@ -191,18 +191,31 @@ templ Comment(cvm CommentViewModel) {
 					>{ cvm.ctvm.content }</time>
 				</p>
 			</div>
-			<details class="dropdown">
-				<summary class="btn m-1">
-					<svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 3">
-						<path d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"></path>
-					</svg>
-				</summary>
-				<ul class="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-					<li><a>Reply</a></li>
-					<li><a>Report</a></li>
-					<li><a>Delete</a></li>
-				</ul>
-			</details>
+			<div class="flex items-center justify-center gap-x-3">
+				@components.UpvoteCount(0)
+				@components.UpvoteCommentBtn(false)
+				if userID, ok := ctx.Value("userID").(int); ok && userID != 0 {
+					<details class="dropdown">
+						<summary class="btn m-1">
+							<svg
+								class="w-4 h-4"
+								aria-hidden="true"
+								xmlns="http://www.w3.org/2000/svg"
+								fill="currentColor"
+								viewBox="0 0 16 3"
+							>
+								<path
+									d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"
+								></path>
+							</svg>
+						</summary>
+						<ul class="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+							<li><a>Reply</a></li>
+							<li><a>Report</a></li>
+						</ul>
+					</details>
+				}
+			</div>
 		</footer>
 		<p>{ cvm.content }</p>
 	</article>
