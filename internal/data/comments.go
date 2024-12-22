@@ -3,8 +3,11 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type Comment struct {
@@ -15,6 +18,7 @@ type Comment struct {
 	DiscussionId int
 	Content      string
 	U            User
+	NumUpvotes   int
 }
 
 type Comments []Comment
@@ -53,6 +57,21 @@ func (cm CommentModel) Insert(c *Comment) error {
 	return nil
 }
 
+func (cm CommentModel) Upvote(userId, commentId int) error {
+	q := "INSERT INTO upvotes (user_id, comment_id) VALUES($1, $2)"
+	args := []any{&userId, &commentId}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if _, err := cm.DB.ExecContext(ctx, q, args...); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Message == `duplicate key value violates unique constraint "upvotes_user_id_comment_id_key"` {
+			return fmt.Errorf("user can upvote comment only once: %w", ErrUniquenessViolation)
+		}
+		return fmt.Errorf("in commentModel#upvote: %w", err)
+	}
+	return nil
+}
+
 func (cm CommentModel) GetAllWithUser(discussionId int, page int) (Comments, int, error) {
 	q := `
 		SELECT
@@ -63,10 +82,13 @@ func (cm CommentModel) GetAllWithUser(discussionId int, page int) (Comments, int
 			c.discussion_id,
 			c.content,
 			u.name,
-			u.avatar_src
+			u.avatar_src,
+			COUNT(up.id)
 		FROM comments c
 			INNER JOIN users u ON c.user_id=u.id
+			LEFT JOIN upvotes up ON up.comment_id=c.id
 		WHERE discussion_id=$1 OR $1=0
+		GROUP BY c.id, u.id
 		ORDER BY c.created_at DESC
 		LIMIT 10
 		OFFSET $2
@@ -100,6 +122,7 @@ func (cm CommentModel) GetAllWithUser(discussionId int, page int) (Comments, int
 			&c.Content,
 			&c.U.Name,
 			&c.U.AvatarSrc,
+			&c.NumUpvotes,
 		); err != nil {
 			return comments, 0, fmt.Errorf(
 				"in CommentModel#Get while mapping fields: %w",

@@ -3,7 +3,7 @@ module github.com/N0tR1CH/sad
 go 1.22.5
 
 require (
-	github.com/a-h/templ v0.2.747
+	github.com/a-h/templ v0.2.793
 	github.com/alexedwards/scs/pgxstore v0.0.0-20240316134038-7e11d57e8885
 	github.com/alexedwards/scs/v2 v2.8.0
 	github.com/charmbracelet/log v0.4.0
@@ -19,7 +19,7 @@ require (
 	github.com/wneessen/go-mail v0.4.4
 	github.com/yuin/goldmark v1.4.13
 	golang.org/x/crypto v0.27.0
-	golang.org/x/net v0.24.0
+	golang.org/x/net v0.28.0
 )
 
 require (

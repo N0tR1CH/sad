@@ -84,10 +84,13 @@ templ commentInput(discussionId int) {
 }
 
 type CommentViewModel struct {
-	username string
-	ctvm     commentTimeViewModel
-	imgSrc   string
-	content  string
+	username     string
+	ctvm         commentTimeViewModel
+	imgSrc       string
+	content      string
+	upvotes      int
+	discussionId int
+	commentId    int
 }
 
 type commentTimeViewModel struct {
@@ -120,6 +123,7 @@ func NewCommentViewModel(
 	imgSrc,
 	content string,
 	t time.Time,
+	numUpvotes, discussionId, commentId int,
 ) CommentViewModel {
 	dayWithSuffix := func(day int) string {
 		if day%100 >= 11 && 100 <= 13 {
@@ -159,9 +163,12 @@ func NewCommentViewModel(
 			}
 			return username
 		}(),
-		imgSrc:  imgSrc,
-		ctvm:    ctvm,
-		content: content,
+		imgSrc:       imgSrc,
+		ctvm:         ctvm,
+		content:      content,
+		upvotes:      numUpvotes,
+		commentId:    commentId,
+		discussionId: discussionId,
 	}
 }
 
@@ -192,9 +199,9 @@ templ Comment(cvm CommentViewModel) {
 				</p>
 			</div>
 			<div class="flex items-center justify-center gap-x-3">
-				@components.UpvoteCount(0)
-				@components.UpvoteCommentBtn(false)
 				if userID, ok := ctx.Value("userID").(int); ok && userID != 0 {
+					@components.UpvoteCount(cvm.upvotes)
+					@components.UpvoteCommentBtn(cvm.discussionId, cvm.commentId)
 					<details class="dropdown">
 						<summary class="btn m-1">
 							<svg
@@ -214,6 +221,15 @@ templ Comment(cvm CommentViewModel) {
 							<li><a>Report</a></li>
 						</ul>
 					</details>
+				} else {
+					@components.UpvoteCount(cvm.upvotes)
+					<span class="text-xl">
+						if cvm.upvotes == 1 {
+							upvote
+						} else {
+							upvotes
+						}
+					</span>
 				}
 			</div>
 		</footer>

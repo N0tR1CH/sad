@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -73,6 +75,9 @@ func (app *application) createCommentHandler(c echo.Context) error {
 				imgSrc,
 				comment.Content,
 				comment.CreatedAt,
+				comment.NumUpvotes,
+				comment.DiscussionId,
+				comment.ID,
 			),
 		),
 	)
@@ -84,36 +89,15 @@ func (app *application) getCommentsHandler(c echo.Context) error {
 	}
 
 	if err := c.Bind(&input); err != nil {
-		app.logger.Error(
-			"in app#getCommentsHandler: values could not be binded",
-			"input",
-			input,
-			"err",
-			err.Error(),
-		)
-		return err
+		return fmt.Errorf("in app#getCommentHandler: %w", err)
 	}
 	if err := c.Validate(&input); err != nil {
-		app.logger.Error(
-			"in app#getCommentsHandler: values could not be validated",
-			"input",
-			input,
-			"err",
-			err.Error(),
-		)
-		return err
+		return fmt.Errorf("in app#getCommentHandler: %w", err)
 	}
 
 	discussionId, err := strconv.Atoi(input.DiscussionId)
 	if err != nil {
-		app.logger.Error(
-			"in app#getCommentHandler: id could not be converted to integer",
-			"discussionId",
-			input.DiscussionId,
-			"err",
-			err.Error(),
-		)
-		return err
+		return fmt.Errorf("in app#getCommentHandler: %w", err)
 	}
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil {
@@ -122,16 +106,7 @@ func (app *application) getCommentsHandler(c echo.Context) error {
 
 	comments, currCommCount, err := app.models.Comments.GetAllWithUser(discussionId, page)
 	if err != nil {
-		app.logger.Error(
-			"in app#getCommentHandler: while getting all discussions",
-			"discussionId",
-			input.DiscussionId,
-			"err",
-			err.Error(),
-			"comments",
-			comments,
-		)
-		return err
+		return fmt.Errorf("in app#getCommentHandler: %w", err)
 	}
 	cvms := make([]pages.CommentViewModel, len(comments))
 	for i := range cvms {
@@ -140,6 +115,9 @@ func (app *application) getCommentsHandler(c echo.Context) error {
 			comments[i].U.AvatarSrc,
 			comments[i].Content,
 			comments[i].CreatedAt,
+			comments[i].NumUpvotes,
+			comments[i].DiscussionId,
+			comments[i].ID,
 		)
 		cvms[i] = vm
 	}
@@ -148,4 +126,33 @@ func (app *application) getCommentsHandler(c echo.Context) error {
 		http.StatusOK,
 		pages.Comments(cvms, discussionId, page+1, currCommCount),
 	)
+}
+
+func (app *application) upvoteCommentHandler(c echo.Context) error {
+	var input struct {
+		CommentId string `param:"id" validate:"required,number"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return fmt.Errorf("in app#updateCommentHandler: %w", err)
+	}
+	if err := c.Validate(&input); err != nil {
+		return fmt.Errorf("in app#updateCommentHandler: %w", err)
+	}
+	cId, err := strconv.Atoi(input.CommentId)
+	if err != nil {
+		return fmt.Errorf("in app#updateCommentHandler: %w", err)
+	}
+	var userId int
+	if uId, ok := c.Get("userID").(int); !ok || uId == 0 {
+		return errors.New("userID should be in the request context")
+	} else {
+		userId = uId
+	}
+	if err := app.models.Comments.Upvote(userId, cId); err != nil {
+		if errors.Is(err, data.ErrUniquenessViolation) {
+			return c.NoContent(http.StatusConflict)
+		}
+		return fmt.Errorf("in app#updateCommentHandler: %w", err)
+	}
+	return c.NoContent(http.StatusOK)
 }

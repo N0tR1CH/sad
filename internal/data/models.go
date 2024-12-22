@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	ErrRecordNotFound = errors.New("record not found")
-	ErrEditConflict   = errors.New("record could not be updated")
+	ErrRecordNotFound      = errors.New("record not found")
+	ErrEditConflict        = errors.New("record could not be updated")
+	ErrUniquenessViolation = errors.New("record must be unique")
 )
 
 type Models struct {
@@ -50,6 +51,7 @@ type Models struct {
 	Comments interface {
 		Insert(comment *Comment) error
 		GetAllWithUser(discussionId int, page int) (Comments, int, error)
+		Upvote(userId, commentId int) error
 	}
 }
 
