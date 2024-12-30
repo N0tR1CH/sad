@@ -37,6 +37,7 @@ func New(
 	}
 	return Mailer{dialer, sender}
 }
+
 func (m Mailer) Send(
 	recipient string,
 	subjectTemplate templ.Component,

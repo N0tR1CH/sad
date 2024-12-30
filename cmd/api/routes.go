@@ -138,6 +138,8 @@ func (app *application) commentsRoutes(e *echo.Group) {
 	g.GET("", app.getCommentsHandler)
 	g.POST("/create", app.createCommentHandler)
 	g.POST("/:id/upvote", app.upvoteCommentHandler)
+	g.GET("/:id/reply", app.getCommentRepliesHandler)
+	g.POST("/:id/report", app.reportCommentHandler)
 }
 
 // Create users group and sets its middleware.

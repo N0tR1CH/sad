@@ -51,6 +51,7 @@ type Models struct {
 	Comments interface {
 		Insert(comment *Comment) error
 		GetAllWithUser(discussionId int, page int) (Comments, int, error)
+		GetAllChildren(parentId, page int) (comms Comments, numCurrComms int, err error)
 		Upvote(userId, commentId int) error
 	}
 }

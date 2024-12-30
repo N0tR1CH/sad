@@ -18,25 +18,17 @@ func (app *application) createCommentHandler(c echo.Context) error {
 		Content      string `form:"content" validate:"required"`
 	}
 	if err := c.Bind(&input); err != nil {
-		app.logger.Error(
-			"in app#createCommentHandler: values could not be binded",
-			"input",
-			input,
-			"err",
-			err.Error(),
-		)
 		return err
 	}
 	if err := c.Validate(&input); err != nil {
-		app.logger.Error(
-			"in app#createCommentHandler: values could not be validated",
-			"input",
-			input,
-			"err",
-			err.Error(),
-		)
 		return err
 	}
+
+	reply, err := strconv.ParseBool(c.FormValue("isReply"))
+	if err != nil {
+		app.logger.Error("in app#createCommentHandler", "err", err.Error())
+	}
+	app.logger.Info("in app#createCommentHandler", "reply", reply)
 
 	discussionId, err := strconv.Atoi(input.DiscussionId)
 	if err != nil {
@@ -52,18 +44,23 @@ func (app *application) createCommentHandler(c echo.Context) error {
 	comment.UserId = app.sessionManager.GetInt(c.Request().Context(), "userID")
 	comment.Content = input.Content
 	comment.DiscussionId = discussionId
+
+	if reply {
+		parentId, err := strconv.Atoi(c.FormValue("parentId"))
+		if err != nil {
+			return err
+		}
+		comment.ParentId = parentId
+	}
 	if err := app.models.Comments.Insert(comment); err != nil {
-		app.logger.Error("in app#createCommentHandler", "err", err.Error())
 		return err
 	}
 	imgSrc, err := app.models.Users.AvatarSrcByID(comment.UserId)
 	if err != nil {
-		app.logger.Error("in app#createCommentHandler", "err", err.Error())
 		return err
 	}
 	username, err := app.models.Users.GetUsername(comment.UserId)
 	if err != nil {
-		app.logger.Error("in app#createCommentHandler", "err", err.Error())
 		return err
 	}
 	return views.Render(
@@ -94,7 +91,12 @@ func (app *application) getCommentsHandler(c echo.Context) error {
 	if err := c.Validate(&input); err != nil {
 		return fmt.Errorf("in app#getCommentHandler: %w", err)
 	}
-
+	if !c.Get("HTMX").(bool) {
+		return c.Redirect(
+			http.StatusTemporaryRedirect,
+			fmt.Sprintf("/discussions/%s", input.DiscussionId),
+		)
+	}
 	discussionId, err := strconv.Atoi(input.DiscussionId)
 	if err != nil {
 		return fmt.Errorf("in app#getCommentHandler: %w", err)
@@ -124,7 +126,7 @@ func (app *application) getCommentsHandler(c echo.Context) error {
 	return views.Render(
 		c,
 		http.StatusOK,
-		pages.Comments(cvms, discussionId, page+1, currCommCount),
+		pages.Comments(cvms, discussionId, page+1, currCommCount, 0),
 	)
 }
 
@@ -155,4 +157,72 @@ func (app *application) upvoteCommentHandler(c echo.Context) error {
 		return fmt.Errorf("in app#updateCommentHandler: %w", err)
 	}
 	return c.NoContent(http.StatusOK)
+}
+
+func (app *application) getCommentRepliesHandler(c echo.Context) error {
+	var input struct {
+		DiscussionId string `param:"discussionId" validate:"required,number"`
+		CommentId    string `param:"id" validate:"required,number"`
+		Page         string `query:"page" validate:"required,number"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return fmt.Errorf("in app#getCommentRepliesHandler: %w", err)
+	}
+	if err := c.Validate(&input); err != nil {
+		return fmt.Errorf("in app#getCommentRepliesHandler: %w", err)
+	}
+	if !c.Get("HTMX").(bool) {
+		return c.Redirect(
+			http.StatusTemporaryRedirect,
+			fmt.Sprintf("/discussions/%s", input.DiscussionId),
+		)
+	}
+	discussionId, err := strconv.Atoi(input.DiscussionId)
+	if err != nil {
+		return fmt.Errorf("in app#getCommentRepliesHandler: %w", err)
+	}
+	page, err := strconv.Atoi(input.Page)
+	if err != nil {
+		page = 1
+	}
+	commentParentId, err := strconv.Atoi(input.CommentId)
+	if err != nil {
+		return fmt.Errorf("in app#getCommentRepliesHandler: %w", err)
+	}
+
+	comments, currCommCount, err := app.models.Comments.GetAllChildren(
+		commentParentId,
+		page,
+	)
+	if err != nil {
+		return fmt.Errorf("in app#getCommentRepliesHandler: %w", err)
+	}
+	cvms := make([]pages.CommentViewModel, len(comments))
+	for i := range cvms {
+		vm := pages.NewCommentViewModel(
+			comments[i].U.Name,
+			comments[i].U.AvatarSrc,
+			comments[i].Content,
+			comments[i].CreatedAt,
+			comments[i].NumUpvotes,
+			comments[i].DiscussionId,
+			comments[i].ID,
+		)
+		cvms[i] = vm
+	}
+	return views.Render(
+		c,
+		http.StatusOK,
+		pages.Comments(
+			cvms,
+			discussionId,
+			page+1,
+			currCommCount,
+			commentParentId,
+		),
+	)
+}
+
+func (app *application) reportCommentHandler(c echo.Context) error {
+	return nil
 }

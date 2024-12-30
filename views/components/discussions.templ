@@ -260,12 +260,21 @@ templ DiscussionCard(discussionCardViewModel DiscussionCardViewModel, isPreview 
 			/>
 		</figure>
 		<div class="card-body">
-			<h2 class="card-title">{ discussionCardViewModel.CardTitle }</h2>
+			<h2 class="card-title text-ellipsis overflow-hidden whitespace-nowrap">
+				{ discussionCardViewModel.CardTitle }
+			</h2>
 			if !isPreview {
 				<div class="card-actions justify-end">
 					<button
 						class="btn btn-primary"
-						hx-get={ string(templ.URL(fmt.Sprintf("/discussions/%d", discussionCardViewModel.Id))) }
+						hx-get={ string(
+                                templ.URL(
+                                    fmt.Sprintf(
+                                        "/discussions/%d",
+                                        discussionCardViewModel.Id,
+                                    ),
+                                ),
+                            ) }
 						hx-target="#app-main-container"
 						hx-push-url="true"
 						hx-swap="innerHTML show:window:top"
@@ -293,8 +302,10 @@ templ Discussion(dvm DiscussionViewModel) {
 			class="link link-info"
 			href={ templ.SafeURL(dvm.ResourceUrl) }
 		>Go to discussed resource</a>
-		<div class="prose py-4">
-			<h1 class="text-center">{ dvm.Title }</h1>
+		<div class="prose py-4 px-2">
+			<h1 class="text-center text-ellipsis overflow-hidden break-all">
+				{ dvm.Title }
+			</h1>
 			@dvm.Description
 		</div>
 	</div>
@@ -361,6 +372,7 @@ templ UpvoteCommentBtn(discussionId, commentId int) {
 		if token, ok := ctx.Value("csrf").(string); ok {
 			hx-headers={ TokenCSRF(token) }
 		}
+		hx-push-url="false"
 	>
 		<svg
 			fill="white"

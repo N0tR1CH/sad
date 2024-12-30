@@ -34,14 +34,26 @@ templ DiscussionPageBody(dpp DiscussionPageProps) {
 		<section
 			id="discussion-comments"
 			class="space-y-2 my-4"
-			hx-get={ string(templ.URL(fmt.Sprintf("/discussions/%d/comments?page=1", dpp.Dvm.Id))) }
+			hx-get={
+				string(
+					templ.URL(
+						fmt.Sprintf(
+							"/discussions/%d/comments?page=1",
+							dpp.Dvm.Id,
+						),
+					),
+				),
+			}
 			hx-trigger="load, getComms"
 			hx-swap="innerHTML"
-			_="
+			if id, ok := ctx.Value("userID").(int); ok && id != 0 {
+				_="
                 on htmx:afterRequest
                     send refreshBtnStopSpin to #refresh-btn
                 end
             "
+			}
+			hx-push-url="true"
 		></section>
 	</div>
 }
@@ -55,32 +67,41 @@ templ commentInput(discussionId int) {
 			placeholder="Write a comment..."
 		></textarea>
 		<div class="flex items-center">
-			<button
-				class="btn btn-primary"
-				hx-post={ string(templ.URL(fmt.Sprintf("/discussions/%d/comments/create", discussionId))) }
-				hx-target="#discussion-comments"
-				hx-swap="afterbegin"
-				hx-include="[name='content']"
-				hx-trigger="click delay:200ms"
-				_="
-                on htmx:afterRequest
-                    if event.detail.successful
-                        set #comment-input.value to ''
-                        runToast('success', 'Comment was succesfully inserted into the dicussion')
-                    else
-                        runToast('error', 'Comment could not be inserted into the dicussion')
-                    end
-                end
-            "
-				if token, ok := ctx.Value("csrf").(string); ok {
-					hx-headers={ components.TokenCSRF(token) }
-				}
-			>
-				Add Comment
-			</button>
+			@CreateCommBtn(CreateCommBtnViewModel{DiscussionId: discussionId})
 			@refreshBtn()
 		</div>
 	</div>
+}
+
+type CreateCommBtnViewModel struct {
+	DiscussionId int
+}
+
+templ CreateCommBtn(ccbvm CreateCommBtnViewModel) {
+	<button
+		class="btn btn-primary"
+		hx-post={ string(templ.URL(fmt.Sprintf("/discussions/%d/comments/create", ccbvm.DiscussionId))) }
+		hx-target="#discussion-comments"
+		hx-swap="afterbegin"
+		hx-include="[name='content']"
+		hx-trigger="click delay:200ms"
+		hx-vals='js:{isReply: window.location.pathname.split("/").pop() === "reply", parentId: window.location.pathname.split("/").slice(-2, -1)[0]}'
+		_="
+        on htmx:afterRequest
+            if event.detail.successful
+                set #comment-input.value to ''
+                runToast('success', 'Comment was succesfully inserted into the dicussion')
+            else
+                runToast('error', 'Comment could not be inserted into the dicussion')
+            end
+        end
+        "
+		if token, ok := ctx.Value("csrf").(string); ok {
+			hx-headers={ components.TokenCSRF(token) }
+		}
+	>
+		Add Comment
+	</button>
 }
 
 type CommentViewModel struct {
@@ -99,16 +120,46 @@ type commentTimeViewModel struct {
 	content  string
 }
 
-templ Comments(cvms []CommentViewModel, discussionId int, page int, currCommCount int) {
-	for _, cvm := range cvms {
-		@Comment(cvm)
-	}
+templ Comments(
+	cvms []CommentViewModel,
+	discussionId int,
+	page int,
+	currCommCount int,
+	parentId int,
+) {
+	<section>
+		for _, cvm := range cvms {
+			@Comment(cvm)
+		}
+	</section>
 	if currCommCount > 0 {
 		<div
-			hx-get={ string(templ.URL(fmt.Sprintf("/discussions/%d/comments?page=%d", discussionId, page))) }
+			if parentId == 0 {
+				hx-get={ string(
+                    templ.URL(
+                        fmt.Sprintf(
+                            "/discussions/%d/comments?page=%d",
+                            discussionId,
+                            page,
+                        ),
+                    ),
+                ) }
+			} else {
+				hx-get={ string(
+                    templ.URL(
+                        fmt.Sprintf(
+                            "/discussions/%d/comments/reply/%d?page=%d",
+                            discussionId,
+                            parentId,
+                            page,
+                        ),
+                    ),
+                ) }
+			}
 			hx-trigger="revealed"
 			hx-swap="outerHTML"
 			hx-indicator="#more-comments-loading-bar"
+			hx-push-url="true"
 		>
 			<div
 				class="divider"
@@ -173,7 +224,10 @@ func NewCommentViewModel(
 }
 
 templ Comment(cvm CommentViewModel) {
-	<article class="p-2 text-base rounded-lg">
+	<article
+		id={ fmt.Sprintf("discussion-comment-%d", cvm.commentId) }
+		class="p-2 text-base rounded-lg"
+	>
 		<footer class="flex justify-between items-center mb-2">
 			<div class="flex items-center">
 				<p class="inline-flex items-center mr-3 text-sm text-gray-900 dark:text-white font-semibold">
@@ -216,9 +270,35 @@ templ Comment(cvm CommentViewModel) {
 								></path>
 							</svg>
 						</summary>
-						<ul class="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-							<li><a>Reply</a></li>
-							<li><a>Report</a></li>
+						<ul
+							class="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+						>
+							<li>
+								<button
+									hx-get={
+										string(
+											templ.URL(
+												fmt.Sprintf(
+													"/discussions/%d/comments/%d/reply?page=1",
+													cvm.discussionId,
+													cvm.commentId,
+												),
+											),
+										),
+									}
+									hx-target="#discussion-comments"
+									hx-swap="innerHTML"
+									_="on click remove @open from closest <details />"
+									hx-push-url="true"
+								>
+									Reply
+								</button>
+							</li>
+							<li>
+								<a>
+									Report
+								</a>
+							</li>
 						</ul>
 					</details>
 				} else {

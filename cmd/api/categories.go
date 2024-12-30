@@ -9,6 +9,9 @@ import (
 )
 
 func (app *application) getCategoriesHandler(c echo.Context) error {
+	if !c.Get("HTMX").(bool) {
+		return c.Redirect(http.StatusTemporaryRedirect, "/")
+	}
 	categories, err := app.models.Categories.GetAll()
 	if err != nil {
 		return err
