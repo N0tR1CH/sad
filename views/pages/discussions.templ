@@ -298,7 +298,7 @@ templ Comment(cvm CommentViewModel) {
 							</li>
 							if id, ok := ctx.Value("userID").(int); ok && id != 0 && id != cvm.userId {
 								<li>
-									<a href={ templ.SafeURL(fmt.Sprintf("/users/%d?commentId=%d", cvm.userId, cvm.discussionId)) }>
+									<a href={ templ.SafeURL(fmt.Sprintf("/users/%d?commentId=%d", cvm.userId, cvm.commentId)) }>
 										Report
 									</a>
 								</li>

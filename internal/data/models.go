@@ -57,6 +57,9 @@ type Models struct {
 		GetAllChildren(parentId, page int) (comms Comments, numCurrComms int, err error)
 		Upvote(userId, commentId int) error
 	}
+	Reports interface {
+		Insert(r *Report) error
+	}
 }
 
 func NewModels(db *sql.DB) Models {
@@ -67,5 +70,6 @@ func NewModels(db *sql.DB) Models {
 		Categories:  CategoryModel{DB: db},
 		Roles:       RoleModel{DB: db},
 		Comments:    CommentModel{DB: db},
+		Reports:     ReportModel{DB: db},
 	}
 }

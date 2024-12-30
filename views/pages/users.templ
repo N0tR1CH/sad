@@ -60,7 +60,7 @@ templ UserPageBody(upvm UserPageViewModel) {
 										),
 									),
 								}
-								hx-vals='js:{discussionId: new URLSearchParams(window.location.search).get("discussionId") ?? 0, commentId: new URLSearchParams(window.location.search).get("commentId")} ?? 0'
+								hx-vals='js:{commentId: new URLSearchParams(window.location.search).get("commentId") || 0, discussionId: new URLSearchParams(window.location.search).get("discussionId") || 0}'
 								hx-swap="outerHTML"
 							>
 								Report

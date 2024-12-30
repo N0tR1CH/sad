@@ -962,7 +962,8 @@ func (app *application) getReportUserFormHandler(c echo.Context) error {
 
 func (app *application) reportUserHandler(c echo.Context) error {
 	var input struct {
-		ID string `param:"id" validate:"required,number"`
+		ID     string `param:"id" validate:"required,number"`
+		Reason string `form:"reason" validate:"required,max=255"`
 	}
 	if err := c.Bind(&input); err != nil {
 		return err
@@ -985,7 +986,10 @@ func (app *application) reportUserHandler(c echo.Context) error {
 			return err
 		}
 		if admin {
-			return errors.New("admin cannot be reported")
+			return c.String(
+				http.StatusBadRequest,
+				"admin cannot be reported",
+			)
 		}
 	}
 	discussionId, err := strconv.Atoi(c.QueryParam("discussionId"))
@@ -1007,6 +1011,21 @@ func (app *application) reportUserHandler(c echo.Context) error {
 	if discussionId == 0 && commentId == 0 ||
 		discussionId != 0 && commentId != 0 {
 		return errors.New("can only report for discussion or category")
+	}
+	r := new(data.Report)
+	r.ReportedUserID = userId
+	r.UserID = c.Get("userID").(int)
+	r.DiscussionID = discussionId
+	r.CommentID = commentId
+	r.Reason = input.Reason
+	if err := app.models.Reports.Insert(r); err != nil {
+		if errors.Is(err, data.ErrUniquenessViolation) {
+			return c.String(
+				http.StatusBadRequest,
+				"You can't report same user twice for the same thing",
+			)
+		}
+		return err
 	}
 	return c.NoContent(http.StatusOK)
 }
