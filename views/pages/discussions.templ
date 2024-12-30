@@ -112,6 +112,7 @@ type CommentViewModel struct {
 	upvotes      int
 	discussionId int
 	commentId    int
+	userId       int
 }
 
 type commentTimeViewModel struct {
@@ -174,7 +175,7 @@ func NewCommentViewModel(
 	imgSrc,
 	content string,
 	t time.Time,
-	numUpvotes, discussionId, commentId int,
+	numUpvotes, discussionId, commentId, userId int,
 ) CommentViewModel {
 	dayWithSuffix := func(day int) string {
 		if day%100 >= 11 && 100 <= 13 {
@@ -220,6 +221,7 @@ func NewCommentViewModel(
 		upvotes:      numUpvotes,
 		commentId:    commentId,
 		discussionId: discussionId,
+		userId:       userId,
 	}
 }
 

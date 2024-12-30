@@ -1,0 +1,95 @@
+package pages
+
+import (
+	"github.com/N0tR1CH/sad/views/layouts"
+	"fmt"
+)
+
+type UserPageViewModel struct {
+	Id          int
+	Name        string
+	AvatarSrc   string
+	Activated   bool
+	Description string
+	ErrMsg      string
+}
+
+func UserPageError(errMsg string) UserPageViewModel {
+	return UserPageViewModel{ErrMsg: errMsg}
+}
+
+templ UserPage(upvm UserPageViewModel) {
+	@layouts.Base() {
+		@UserPageBody(upvm)
+	}
+}
+
+templ UserPageBody(upvm UserPageViewModel) {
+	switch  {
+		case upvm.ErrMsg != "":
+			{ upvm.ErrMsg }
+		case !upvm.Activated:
+			<h1 class="text-center text-xl">
+				This account is not acitvated!
+			</h1>
+		default:
+			<section class="flex flex-col justify-center p-4">
+				<h1 class="text-center text-xl">{ upvm.Name }</h1>
+				if upvm.AvatarSrc != "" {
+					<div class="avatar flex items-center justify-center">
+						<div class="w-24 rounded-xl">
+							<img src={ upvm.AvatarSrc }/>
+						</div>
+					</div>
+					@UserDescription(upvm.Description, false)
+				}
+				<div class="flex gap-x-2 justify-center">
+					if id, ok := ctx.Value("userID").(int); ok && id != 0 {
+						if id == upvm.Id {
+							@EditUserBtn(id)
+						} else {
+							<button class="btn btn-outline btn-error">
+								Report
+							</button>
+						}
+					}
+				</div>
+			</section>
+	}
+}
+
+templ UserDescription(description string, oobUpdate bool) {
+	<div
+		id="user-description"
+		class="prose text-center mx-auto"
+		if oobUpdate {
+			hx-swap-oob="true"
+		}
+	>
+		<p>{ description }</p>
+	</div>
+}
+
+templ EditUserBtn(id int) {
+	<button
+		class="btn btn-outline"
+		hx-swap="outerHTML"
+		hx-get={
+			string(
+				templ.URL(
+					fmt.Sprintf(
+						"/users/%d/edit",
+						id,
+					),
+				),
+			),
+		}
+	>
+		Edit
+	</button>
+}
+
+templ AfterUserEdit(description string, id int) {
+	@EditUserBtn(id)
+	@UserDescription(description, true)
+}

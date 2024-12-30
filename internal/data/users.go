@@ -18,20 +18,49 @@ var (
 const bcryptCost = 12
 
 type User struct {
-	ID        int
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	AvatarSrc string
-	Name      string
-	Email     string
-	Password  password
-	Activated bool
-	Version   int
-	RoleID    int
+	ID          int
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	AvatarSrc   string
+	Name        string
+	Email       string
+	Password    password
+	Activated   bool
+	Version     int
+	RoleID      int
+	Description string
 }
 
 type UserModel struct {
 	DB *sql.DB
+}
+
+func (um UserModel) HasRole(userId int, rolename string) (bool, error) {
+	var hasRole bool
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	q := `
+		SELECT EXISTS(
+			SELECT u.id
+			FROM users u JOIN roles r ON u.role_id=r.id
+			WHERE u.id=$1 AND r.name=$2
+		)
+	`
+	args := []any{&userId, &rolename}
+	if err := um.DB.QueryRowContext(ctx, q, args...).Scan(&hasRole); err != nil {
+		return false, fmt.Errorf("in UserModel#Admin: %w", err)
+	}
+	return hasRole, nil
+}
+
+func (um UserModel) GetEmail(id int) (email string, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	q := "SELECT u.email FROM users u WHERE u.id=$1"
+	if err = um.DB.QueryRowContext(ctx, q, &id).Scan(&email); err != nil {
+		return "", fmt.Errorf("in UserModel#GetEmail: %w", err)
+	}
+	return email, err
 }
 
 func (um UserModel) GetUsername(id int) (string, error) {
@@ -46,6 +75,20 @@ func (um UserModel) GetUsername(id int) (string, error) {
 		return "", err
 	}
 	return username, nil
+}
+
+func (um UserModel) GetDescription(id int) (string, error) {
+	var description string
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	q := "SELECT description FROM users WHERE id=$1"
+	if err := um.DB.QueryRowContext(ctx, q, &id).Scan(&description); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", nil
+		}
+		return "", err
+	}
+	return description, nil
 }
 
 func (um UserModel) GetForToken(scope string, plainTextToken string) (*User, error) {
@@ -159,7 +202,9 @@ func (um UserModel) GetByEmail(email string) (*User, error) {
 			email,
 			password_hash,
 			activated,
-			version
+			version,
+			avatar_src,
+			description
 		FROM
 			users
 		WHERE
@@ -188,6 +233,8 @@ func (um UserModel) GetByEmail(email string) (*User, error) {
 		&user.Password.hash,
 		&user.Activated,
 		&user.Version,
+		&user.AvatarSrc,
+		&user.Description,
 	); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -224,11 +271,13 @@ func (um UserModel) Update(user *User) error {
 			email = $2,
 			password_hash = $3,
 			activated = $4,
+			description = $7,
 			version = version + 1
 		WHERE
 			id = $5 AND version = $6
 		RETURNING
-			version`
+			version
+	`
 	args := []any{
 		&user.Name,
 		&user.Email,
@@ -236,6 +285,7 @@ func (um UserModel) Update(user *User) error {
 		&user.Activated,
 		&user.ID,
 		&user.Version,
+		&user.Description,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

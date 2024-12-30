@@ -29,6 +29,9 @@ type Models struct {
 		Exists(id int) (bool, error)
 		AvatarSrcByID(id int) (string, error)
 		Authorized(userID int, permission string) (bool, error)
+		GetEmail(id int) (email string, err error)
+		GetDescription(id int) (string, error)
+		HasRole(userId int, rolename string) (bool, error)
 	}
 	Tokens interface {
 		New(userID int, lifeTime time.Duration, tokenType TokenType) (*Token, error)

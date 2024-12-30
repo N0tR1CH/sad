@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -766,4 +767,156 @@ func (app *application) getUserAvatarHandler(c echo.Context) error {
 		t = components.AvatarPlaceHolder()
 	}
 	return views.Render(c, http.StatusOK, t)
+}
+
+func (app *application) getUserHandler(c echo.Context) error {
+	var input struct {
+		ID string `param:"id" validate:"required,number"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return err
+	}
+	if err := c.Validate(&input); err != nil {
+		tag := err.(validator.ValidationErrors)[0].Tag()
+		var errMsg string
+		switch tag {
+		case "required":
+			errMsg = "user id is required"
+		case "number":
+			errMsg = "user id must be a number"
+		}
+		vm := pages.UserPageError(errMsg)
+		if c.Get("HTMX").(bool) {
+			return views.Render(c, http.StatusNotFound, pages.UserPageBody(vm))
+		}
+		return views.Render(c, http.StatusNotFound, pages.UserPage(vm))
+	}
+	uID, err := strconv.Atoi(input.ID)
+	if err != nil {
+		return err
+	}
+	email, err := app.models.Users.GetEmail(uID)
+	if err != nil {
+		return err
+	}
+	u, err := app.models.Users.GetByEmail(email)
+	if err != nil {
+		if errors.Is(sql.ErrNoRows, err) {
+			return views.Render(c, http.StatusNotFound, pages.Page404())
+		}
+		return err
+	}
+	vm := pages.UserPageViewModel{
+		Id:          u.ID,
+		Name:        u.Name,
+		AvatarSrc:   u.AvatarSrc,
+		Description: u.Description,
+		Activated:   u.Activated,
+	}
+	if c.Get("HTMX").(bool) && !c.Get("Boosted").(bool) {
+		return views.Render(c, http.StatusOK, pages.UserPageBody(vm))
+	}
+	return views.Render(c, http.StatusOK, pages.UserPage(vm))
+}
+
+func (app *application) editUserHandler(c echo.Context) error {
+	var input struct {
+		ID string `param:"id" validate:"required,number"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return err
+	}
+	if err := c.Validate(&input); err != nil {
+		return err
+	}
+	uID, err := strconv.Atoi(input.ID)
+	if err != nil {
+		return err
+	}
+	description, err := app.models.Users.GetDescription(uID)
+	if err != nil {
+		return err
+	}
+	return views.Render(
+		c,
+		http.StatusOK,
+		components.EditUserForm(
+			components.EditUserFormViewModel{
+				Id:          uID,
+				Description: description,
+				ErrMsg:      "",
+			},
+		),
+	)
+}
+
+func (app *application) updateUserHandler(c echo.Context) error {
+	var input struct {
+		ID          string `param:"id" validate:"required,number"`
+		Description string `form:"description" validate:"required,max=255"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return err
+	}
+	if err := c.Validate(&input); err != nil {
+		uID, err := strconv.Atoi(input.ID)
+		if err != nil {
+			return err
+		}
+		description, err := app.models.Users.GetDescription(uID)
+		if err != nil {
+			return err
+		}
+		return views.Render(
+			c,
+			http.StatusBadRequest,
+			components.EditUserForm(
+				components.EditUserFormViewModel{
+					Id:          uID,
+					Description: description,
+					ErrMsg:      "Validation problem",
+				},
+			),
+		)
+	}
+	uID, err := strconv.Atoi(input.ID)
+	if err != nil {
+		return err
+	}
+	email, err := app.models.Users.GetEmail(uID)
+	if err != nil {
+		return err
+	}
+	u, err := app.models.Users.GetByEmail(email)
+	if err != nil {
+		return err
+	}
+	if u.ID != c.Get("userID").(int) {
+		return c.NoContent(http.StatusUnauthorized)
+	}
+	if has, err := app.models.Users.HasRole(uID, "admin"); err != nil || !has {
+		views.Render(
+			c,
+			http.StatusOK,
+			components.EditUserForm(
+				components.EditUserFormViewModel{
+					Id:          uID,
+					Description: u.Description,
+					ErrMsg:      "Not authorized",
+				},
+			),
+		)
+	}
+	u.Description = input.Description
+	if err := app.models.Users.Update(u); err != nil {
+		return err
+	}
+	return views.Render(
+		c,
+		http.StatusOK,
+		pages.AfterUserEdit(
+			u.Description,
+			u.ID,
+		),
+	)
 }

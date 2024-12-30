@@ -155,6 +155,10 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	g.RouteNotFound("/*", func(c echo.Context) error {
 		return views.Render(c, http.StatusNotFound, pages.Page404())
 	})
+
+	// GET /users/:id=[int]
+	g.GET("/:id", app.getUserHandler)
+
 	// POST /users/create
 	g.POST("/create", app.createUserHandler)
 
@@ -191,6 +195,15 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	// - token: string
 	//
 	g.PUT("/:id/activated", app.updateUserActivationStatusHandler)
+
+	// GET /users/:id=[int]/edit
+	g.GET("/:id/edit", app.editUserHandler)
+
+	// PUT /users/:id=[int]
+	//
+	// FormData:
+	// - description: string
+	g.PUT("/:id", app.updateUserHandler)
 }
 
 func (app *application) categoriesRoutes(e *echo.Echo) {

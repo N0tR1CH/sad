@@ -15,11 +15,13 @@ templ Avatar(oobValue string, userID int) {
 			class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
 		>
 			<li>
-				<a class="justify-between">
+				<a class="justify-between" href={ templ.SafeURL(fmt.Sprintf("/users/%d", userID)) }>
 					Profile
 				</a>
 			</li>
-			<li><a>Settings</a></li>
+			if false {
+				<li><a>Settings</a></li>
+			}
 			<li>
 				<button
 					hx-post={ string(templ.URL(fmt.Sprintf("/users/%d/deauthenticate", userID))) }
@@ -51,4 +53,71 @@ templ AvatarPlaceHolder() {
 			<span>U</span>
 		</div>
 	</div>
+}
+
+type EditUserFormViewModel struct {
+	Id          int
+	Description string
+	ErrMsg      string
+}
+
+templ EditUserForm(eufvm EditUserFormViewModel) {
+	<form
+		id="edit-user-form"
+		class="flex flex-col items-center gap-y-4"
+		hx-put={
+			string(
+				templ.URL(
+					fmt.Sprintf(
+						"/users/%d",
+						eufvm.Id,
+					),
+				),
+			),
+		}
+		hx-disabled-elt="#update-btn"
+		hx-swap="outerHTML"
+		if token, ok := ctx.Value("csrf").(string); ok {
+			hx-headers={ TokenCSRF(token) }
+		}
+	>
+		if eufvm.ErrMsg != "" {
+			<div role="alert" class="alert alert-error" x-data="open: false">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-6 w-6 shrink-0 stroke-current"
+					fill="none"
+					viewBox="0 0 24 24"
+					x-show="open"
+					x-transition:enter.duration.500ms
+					x-transition:leave.duration.400ms
+					x-init="
+                    setTimeout(() => { open = true }, 50);
+                    setTimeout(() => { open = false }, 3000);
+                "
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+					></path>
+				</svg>
+				<span>{ eufvm.ErrMsg }</span>
+			</div>
+		}
+		<textarea
+			name="description"
+			class="textarea textarea-bordered"
+			placeholder="Bio"
+		>
+			{ eufvm.Description }
+		</textarea>
+		<button
+			id="update-btn"
+			class="btn btn-outline btn-success"
+		>
+			Update
+		</button>
+	</form>
 }

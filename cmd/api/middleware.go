@@ -163,6 +163,8 @@ func addHtmxToContext(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		_, ok := c.Request().Header[http.CanonicalHeaderKey("HX-Request")]
 		c.Set("HTMX", ok)
+		_, ok = c.Request().Header[http.CanonicalHeaderKey("HX-Boosted")]
+		c.Set("Boosted", ok)
 		return next(c)
 	}
 }

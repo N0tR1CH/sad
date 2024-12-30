@@ -75,6 +75,7 @@ func (app *application) createCommentHandler(c echo.Context) error {
 				comment.NumUpvotes,
 				comment.DiscussionId,
 				comment.ID,
+				comment.UserId,
 			),
 		),
 	)
@@ -120,6 +121,7 @@ func (app *application) getCommentsHandler(c echo.Context) error {
 			comments[i].NumUpvotes,
 			comments[i].DiscussionId,
 			comments[i].ID,
+			comments[i].UserId,
 		)
 		cvms[i] = vm
 	}
@@ -207,6 +209,7 @@ func (app *application) getCommentRepliesHandler(c echo.Context) error {
 			comments[i].NumUpvotes,
 			comments[i].DiscussionId,
 			comments[i].ID,
+			comments[i].UserId,
 		)
 		cvms[i] = vm
 	}
