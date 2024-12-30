@@ -136,6 +136,7 @@ func (app *application) getDiscussionHandler(c echo.Context) error {
 
 	dvm := components.DiscussionViewModel{
 		Id:          d.ID,
+		UserId:      d.UserId,
 		Title:       d.Title,
 		ResourceUrl: d.Url,
 		Dtvm: components.DiscussionTopViewModel{
