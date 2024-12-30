@@ -920,3 +920,93 @@ func (app *application) updateUserHandler(c echo.Context) error {
 		),
 	)
 }
+
+func (app *application) getReportUserFormHandler(c echo.Context) error {
+	var input struct {
+		ID string `param:"id" validate:"required,number"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return err
+	}
+	if err := c.Validate(&input); err != nil {
+		return err
+	}
+	userId, err := strconv.Atoi(input.ID)
+	if err != nil {
+		return err
+	}
+	discussionId, err := strconv.Atoi(c.QueryParam("discussionId"))
+	if err != nil {
+		app.logger.Error("in app#getReportUserFormHandler", "discussionId", discussionId, "err", err.Error())
+	}
+	commentId, err := strconv.Atoi(c.QueryParam("commentId"))
+	if err != nil {
+		app.logger.Error("in app#getReportUserFormHandler", "commentId", commentId, "err", err.Error())
+	}
+	if discussionId == 0 && commentId == 0 ||
+		discussionId != 0 && commentId != 0 {
+		return errors.New("can only report for discussion or category")
+	}
+	return views.Render(
+		c,
+		http.StatusOK,
+		components.ReportUserForm(
+			components.ReportUserFormViewModel{
+				UserId:       userId,
+				DiscussionId: discussionId,
+				CommentId:    commentId,
+			},
+		),
+	)
+}
+
+func (app *application) reportUserHandler(c echo.Context) error {
+	var input struct {
+		ID string `param:"id" validate:"required,number"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return err
+	}
+	if err := c.Validate(&input); err != nil {
+		return err
+	}
+	userId, err := strconv.Atoi(input.ID)
+	if err != nil {
+		return err
+	}
+	if c.Get("userID").(int) == userId {
+		return errors.New("user cannot report himself")
+	}
+	if admin, err := app.models.Users.HasRole(
+		userId,
+		"admin",
+	); err != nil || admin {
+		if err != nil {
+			return err
+		}
+		if admin {
+			return errors.New("admin cannot be reported")
+		}
+	}
+	discussionId, err := strconv.Atoi(c.QueryParam("discussionId"))
+	if err != nil {
+		app.logger.Error(
+			"in app#getReportUserFormHandler",
+			"discussionId", discussionId,
+			"err", err.Error(),
+		)
+	}
+	commentId, err := strconv.Atoi(c.QueryParam("commentId"))
+	if err != nil {
+		app.logger.Error(
+			"in app#getReportUserFormHandler",
+			"commentId", commentId,
+			"err", err.Error(),
+		)
+	}
+	if discussionId == 0 && commentId == 0 ||
+		discussionId != 0 && commentId != 0 {
+		return errors.New("can only report for discussion or category")
+	}
+	return c.NoContent(http.StatusOK)
+}

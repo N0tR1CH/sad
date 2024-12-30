@@ -121,3 +121,60 @@ templ EditUserForm(eufvm EditUserFormViewModel) {
 		</button>
 	</form>
 }
+
+type ReportUserFormViewModel struct {
+	UserId       int
+	DiscussionId int
+	CommentId    int
+}
+
+templ ReportUserForm(rufvm ReportUserFormViewModel) {
+	<form
+		id="report-user-form"
+		class="flex flex-col items-center gap-y-4"
+		hx-post={
+			string(
+				templ.URL(
+					fmt.Sprintf(
+						func() string {
+							switch {
+							case rufvm.DiscussionId != 0:
+								return fmt.Sprintf(
+									"/users/%d/report?discussionId=%d",
+									rufvm.UserId, rufvm.DiscussionId,
+								)
+							case rufvm.CommentId != 0:
+								return fmt.Sprintf(
+									"/users/%d/report?commentId=%d",
+									rufvm.UserId, rufvm.CommentId,
+								)
+							default:
+								return fmt.Sprintf(
+									"/users/%d/report",
+									rufvm.UserId,
+								)
+							}
+						}(),
+					),
+				),
+			),
+		}
+		hx-disabled-elt="#report-btn"
+		hx-swap="outerHTML"
+		if token, ok := ctx.Value("csrf").(string); ok {
+			hx-headers={ TokenCSRF(token) }
+		}
+	>
+		<textarea
+			name="reason"
+			class="textarea textarea-bordered"
+			placeholder="Report reason"
+		></textarea>
+		<button
+			id="update-btn"
+			class="btn btn-outline btn-error"
+		>
+			Report
+		</button>
+	</form>
+}

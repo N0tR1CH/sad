@@ -48,7 +48,21 @@ templ UserPageBody(upvm UserPageViewModel) {
 						if id == upvm.Id {
 							@EditUserBtn(id)
 						} else {
-							<button class="btn btn-outline btn-error">
+							<button
+								class="btn btn-outline btn-error"
+								hx-get={
+									string(
+										templ.URL(
+											fmt.Sprintf(
+												"/users/%d/report",
+												upvm.Id,
+											),
+										),
+									),
+								}
+								hx-vals='js:{discussionId: new URLSearchParams(window.location.search).get("discussionId") ?? 0, commentId: new URLSearchParams(window.location.search).get("commentId")} ?? 0'
+								hx-swap="outerHTML"
+							>
 								Report
 							</button>
 						}
@@ -86,6 +100,25 @@ templ EditUserBtn(id int) {
 		}
 	>
 		Edit
+	</button>
+}
+
+templ ReportUserBtn(id int) {
+	<button
+		class="btn btn-outline"
+		hx-swap="outerHTML"
+		hx-get={
+			string(
+				templ.URL(
+					fmt.Sprintf(
+						"/users/%d/report",
+						id,
+					),
+				),
+			),
+		}
+	>
+		Report
 	</button>
 }
 

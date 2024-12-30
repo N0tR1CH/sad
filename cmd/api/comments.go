@@ -225,7 +225,3 @@ func (app *application) getCommentRepliesHandler(c echo.Context) error {
 		),
 	)
 }
-
-func (app *application) reportCommentHandler(c echo.Context) error {
-	return nil
-}

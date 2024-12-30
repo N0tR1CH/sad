@@ -139,7 +139,6 @@ func (app *application) commentsRoutes(e *echo.Group) {
 	g.POST("/create", app.createCommentHandler)
 	g.POST("/:id/upvote", app.upvoteCommentHandler)
 	g.GET("/:id/reply", app.getCommentRepliesHandler)
-	g.POST("/:id/report", app.reportCommentHandler)
 }
 
 // Create users group and sets its middleware.
@@ -204,6 +203,17 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	// FormData:
 	// - description: string
 	g.PUT("/:id", app.updateUserHandler)
+
+	// GET /users/:id=[int]/report
+	g.GET("/:id/report", app.getReportUserFormHandler)
+
+	// POST /users/:id=[int]/report
+	//
+	// FormData:
+	// - reason: string
+	// - discussionId: nil (if commentId of type int) | int (if discussionId of type nil)
+	// - commentId: nil (if discussionId of type int) | int (if commentId of type nil)
+	g.POST("/:id/report", app.reportUserHandler)
 }
 
 func (app *application) categoriesRoutes(e *echo.Echo) {
