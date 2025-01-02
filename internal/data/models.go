@@ -35,6 +35,7 @@ type Models struct {
 		GetDescription(id int) (string, error)
 		HasRole(userId int, rolename string) (bool, error)
 		Ban(userId int) error
+		Banned(userId int) (bool, error)
 	}
 	Tokens interface {
 		New(userID int, lifeTime time.Duration, tokenType TokenType) (*Token, error)

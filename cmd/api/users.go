@@ -895,7 +895,7 @@ func (app *application) updateUserHandler(c echo.Context) error {
 		return c.NoContent(http.StatusUnauthorized)
 	}
 	if has, err := app.models.Users.HasRole(uID, "admin"); err != nil || !has {
-		views.Render(
+		return views.Render(
 			c,
 			http.StatusOK,
 			components.EditUserForm(

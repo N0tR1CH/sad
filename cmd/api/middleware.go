@@ -120,12 +120,40 @@ func (app *application) userIdExtraction(next echo.HandlerFunc) echo.HandlerFunc
 }
 
 func (app *application) authorize(next echo.HandlerFunc) echo.HandlerFunc {
+	sessMan := app.sessionManager
+	logger := app.logger
+	notFoundPath := func(path string) bool {
+		if path[len(path)-1] == '*' {
+			return true
+		}
+		return false
+	}
 	return func(c echo.Context) error {
-		path := c.Path()
-		method := c.Request().Method
+		var (
+			path   string = c.Path()
+			method string = c.Request().Method
+			userID int    = c.Get("userID").(int)
+		)
+		if banned, err := app.models.Users.Banned(userID); err != nil || banned {
+			switch {
+			case err != nil:
+				return fmt.Errorf("in app#authorize: %w", err)
+			case banned:
+				sessMan.Put(
+					c.Request().Context(),
+					"alert",
+					components.AlertProps{
+						Title: "You are banned!",
+						Text:  "Go play somewhere else :)",
+						Icon:  components.Error,
+					},
+				)
+				return c.Redirect(http.StatusTemporaryRedirect, "/")
+			}
+		}
 		// Not found paths are echo concept and they
 		// do not require permission checks
-		if path[len(path)-1] == '*' {
+		if notFoundPath(path) {
 			return next(c)
 		}
 		app.logger.Info("app#authorize", "method", method, "path", path)
@@ -135,25 +163,28 @@ func (app *application) authorize(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			return c.Redirect(http.StatusTemporaryRedirect, "/")
 		}
-		userID := c.Get("userID").(int)
 		permission := string(bytes)
-		authorized, err := app.models.Users.Authorized(userID, permission)
-		if err != nil {
-			return fmt.Errorf("in app#authorize: %w", err)
-		}
-		if !authorized {
-			app.logger.Info("app#authorize", "userID", userID)
-			app.logger.Info("app#authorize", "Path", path)
-			app.sessionManager.Put(
-				c.Request().Context(),
-				"alert",
-				components.AlertProps{
-					Title: "Not Authorized",
-					Text:  "You are not authorized to do that!",
-					Icon:  components.Error,
-				},
-			)
-			return c.Redirect(http.StatusTemporaryRedirect, "/")
+		if authorized, err := app.models.Users.Authorized(
+			userID,
+			permission,
+		); err != nil || !authorized {
+			switch {
+			case err != nil:
+				return fmt.Errorf("in app#authorize: %w", err)
+			case !authorized:
+				logger.Info("app#authorize", "userID", userID)
+				logger.Info("app#authorize", "Path", path)
+				sessMan.Put(
+					c.Request().Context(),
+					"alert",
+					components.AlertProps{
+						Title: "Not Authorized",
+						Text:  "You are not authorized to do that!",
+						Icon:  components.Error,
+					},
+				)
+				return c.Redirect(http.StatusTemporaryRedirect, "/")
+			}
 		}
 		return next(c)
 	}

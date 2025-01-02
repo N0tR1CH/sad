@@ -386,3 +386,15 @@ func (um UserModel) Ban(userId int) error {
 	}
 	return nil
 }
+
+func (um UserModel) Banned(userId int) (bool, error) {
+	q := "select exists(select id from users where banned=true and id=$1)"
+	args := []any{&userId}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var banned bool
+	if err := um.DB.QueryRowContext(ctx, q, args...).Scan(&banned); err != nil {
+		return banned, err
+	}
+	return banned, nil
+}
