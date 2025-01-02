@@ -1,0 +1,183 @@
+package pages
+
+import (
+	"github.com/N0tR1CH/sad/views/layouts"
+	"github.com/N0tR1CH/sad/views/components"
+	"fmt"
+	"time"
+)
+
+type ReportsPageProps struct {
+	BodyProps ReportsPageBodyProps
+}
+
+templ ReportsPage(props ReportsPageProps) {
+	@layouts.Base() {
+		@reportsPageBody(props.BodyProps)
+	}
+}
+
+templ reportsTable(limit int) {
+	<div class="overflow-x-auto">
+		<table class="table">
+			<!-- head -->
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody
+				hx-get={
+					string(
+						templ.URL(
+							fmt.Sprintf(
+								"/reports?lastSeenId=0&limit=%d",
+								limit,
+							),
+						),
+					),
+				}
+				hx-swap="innerHTML"
+				hx-trigger="load"
+				hx-push-url="true"
+				if token, ok := ctx.Value("csrf").(string); ok {
+					hx-headers={ components.TokenCSRF(token) }
+				}
+			></tbody>
+			<tfoot>
+				<tr>
+					<th>Name</th>
+					<th></th>
+				</tr>
+			</tfoot>
+		</table>
+	</div>
+}
+
+type ReportTableRowProps struct {
+	Reason, Username                    string
+	Id, UserId, DiscussionId, CommentId int
+	ReportedAt                          time.Time
+	UserAvatarSrc                       string
+}
+
+templ reportTableRow(props ReportTableRowProps) {
+	<tr>
+		<td>
+			<div class="flex items-center gap-3">
+				<div class="avatar">
+					<div class="mask mask-squircle h-12 w-12">
+						if props.UserAvatarSrc != "" {
+							<img
+								src={ props.UserAvatarSrc }
+								alt={
+									fmt.Sprintf(
+										"%s's avatar image",
+										props.Username,
+									),
+								}
+								class="h-12 w-12 m-0"
+							/>
+						}
+					</div>
+				</div>
+				<div>
+					<div class="font-bold">{ props.Username }</div>
+				</div>
+			</div>
+		</td>
+		<th
+			x-data="{}"
+		>
+			<button
+				class="btn btn-ghost btn-xs"
+				@click={ fmt.Sprintf("$refs.report%dDialog.showModal()", props.Id) }
+			>
+				details
+			</button>
+			<dialog
+				id={ fmt.Sprintf("report-%d-details", props.Id) }
+				class="modal"
+				x-ref={ fmt.Sprintf("report%dDialog", props.Id) }
+			>
+				<h2>
+					if props.DiscussionId != 0 {
+						Reported for discussion { fmt.Sprintf("%d", props.DiscussionId) }
+					}
+					if props.CommentId != 0 {
+						Reported for comment { fmt.Sprintf("%d", props.CommentId) }
+					}
+				</h2>
+				<p><b>Reason: </b>{ props.Reason }</p>
+				<div class="modal-action">
+					<button
+						class="btn"
+						hx-put={
+							string(
+								templ.URL(
+									fmt.Sprintf(
+										"/users/%d/banned",
+										props.UserId,
+									),
+								),
+							),
+						}
+						hx-target="closest tr"
+						hx-swap="outerHTML"
+						hx-push-url="false"
+					>
+						Ban
+					</button>
+					<button
+						class="btn"
+						@click={ fmt.Sprintf("$refs.report%dDialog.close()", props.Id) }
+					>
+						Close
+					</button>
+				</div>
+			</dialog>
+		</th>
+	</tr>
+}
+
+templ ReportTableRows(props []ReportTableRowProps, limit int) {
+	for _, p := range props {
+		@reportTableRow(p)
+	}
+	if len(props) > 0 {
+		<tr id="reveal">
+			<td colspan="3">
+				<button
+					class="btn primary"
+					hx-get={
+						string(
+							templ.URL(
+								fmt.Sprintf(
+									"/reports?lastSeenId=%d&limit=%d",
+									props[len(props)-1].Id,
+									limit,
+								),
+							),
+						),
+					}
+					hx-target="#reveal"
+					hx-swap="outerHTML"
+				>
+					Load More Reports
+				</button>
+			</td>
+		</tr>
+	}
+}
+
+type ReportsPageBodyProps struct {
+	LastSeenId, Limit int
+}
+
+templ reportsPageBody(props ReportsPageBodyProps) {
+	<div class="prose mx-auto">
+		<h1 class="text-center">Application Reports</h1>
+		@reportsTable(props.Limit)
+	</div>
+}

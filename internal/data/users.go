@@ -375,3 +375,14 @@ func (p *password) Match(clearPassword string) (bool, error) {
 	}
 	return true, nil
 }
+
+func (um UserModel) Ban(userId int) error {
+	q := "update users set banned=true where id=$1"
+	args := []any{&userId}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if _, err := um.DB.ExecContext(ctx, q, args...); err != nil {
+		return err
+	}
+	return nil
+}

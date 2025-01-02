@@ -40,6 +40,7 @@ func (app *application) routes() http.Handler {
 	app.usersRoutes(r)
 	app.categoriesRoutes(r)
 	app.rolesRoutes(r)
+	app.reportsRoutes(r)
 
 	r.GET("/routes", app.getRoutes(r))
 	return r
@@ -214,6 +215,8 @@ func (app *application) usersRoutes(e *echo.Echo) {
 	// - discussionId: nil (if commentId of type int) | int (if discussionId of type nil)
 	// - commentId: nil (if discussionId of type int) | int (if commentId of type nil)
 	g.POST("/:id/report", app.reportUserHandler)
+
+	g.PUT("/:id/banned", app.banUserHandler)
 }
 
 func (app *application) categoriesRoutes(e *echo.Echo) {
@@ -238,4 +241,14 @@ func (app *application) rolesRoutes(e *echo.Echo) {
 	g.DELETE("/:id/permissions", app.deleteRolePermissionHandler)
 	g.GET("/permissions", app.getRolePermissionsHandler)
 	g.POST("/permissions", app.addRolePermissionsHandler)
+}
+
+func (app *application) reportsRoutes(e *echo.Echo) {
+	g := e.Group("/reports")
+
+	g.RouteNotFound("/*", func(c echo.Context) error {
+		return views.Render(c, http.StatusNotFound, pages.Page404())
+	})
+
+	g.GET("", app.getReportsHandler)
 }

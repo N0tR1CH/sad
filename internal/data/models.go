@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"time"
+
+	"log/slog"
 )
 
 var (
@@ -32,6 +34,7 @@ type Models struct {
 		GetEmail(id int) (email string, err error)
 		GetDescription(id int) (string, error)
 		HasRole(userId int, rolename string) (bool, error)
+		Ban(userId int) error
 	}
 	Tokens interface {
 		New(userID int, lifeTime time.Duration, tokenType TokenType) (*Token, error)
@@ -59,10 +62,12 @@ type Models struct {
 	}
 	Reports interface {
 		Insert(r *Report) error
+		GetAll(cursor, limit int) ([]Report, error)
+		AnyAfter(lastSeenId int) (bool, error)
 	}
 }
 
-func NewModels(db *sql.DB) Models {
+func NewModels(db *sql.DB, logger *slog.Logger) Models {
 	return Models{
 		Discussions: DiscussionModel{DB: db},
 		Users:       UserModel{DB: db},
@@ -70,6 +75,6 @@ func NewModels(db *sql.DB) Models {
 		Categories:  CategoryModel{DB: db},
 		Roles:       RoleModel{DB: db},
 		Comments:    CommentModel{DB: db},
-		Reports:     ReportModel{DB: db},
+		Reports:     ReportModel{DB: db, logger: logger},
 	}
 }

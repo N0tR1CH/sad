@@ -262,7 +262,7 @@ func main() {
 	newApplication(
 		cfg,
 		logger,
-		data.NewModels(db),
+		data.NewModels(db, logger),
 		services.NewServices(logger),
 		newSessionManager(pool),
 		mailer.New(

@@ -1029,3 +1029,23 @@ func (app *application) reportUserHandler(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusOK)
 }
+
+func (app *application) banUserHandler(c echo.Context) error {
+	var input struct {
+		ID string `param:"id" validate:"required,number"`
+	}
+	if err := c.Bind(&input); err != nil {
+		return fmt.Errorf("in app#banUserHandler while binding: %w", err)
+	}
+	if err := c.Validate(&input); err != nil {
+		return fmt.Errorf("in app#banUserHandler while validating: %w", err)
+	}
+	uId, err := strconv.Atoi(input.ID)
+	if err != nil {
+		return fmt.Errorf("in app#banUserHandler while converting input: %w", err)
+	}
+	if err := app.models.Users.Ban(uId); err != nil {
+		return fmt.Errorf("in app#banUserHandler while banning user: %w", err)
+	}
+	return c.NoContent(http.StatusOK)
+}
