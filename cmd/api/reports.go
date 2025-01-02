@@ -47,7 +47,6 @@ func (app *application) getReportsHandler(c echo.Context) error {
 		rowsProps[i].CommentId = reports[i].CommentID
 		rowsProps[i].ReportedAt = reports[i].CreatedAt
 		rowsProps[i].UserAvatarSrc = reports[i].ReportedUser.AvatarSrc
-		app.logger.Info("DEBUG", "dsadsa", reports[i].ReportedUser.ID)
 	}
 	return views.Render(
 		c,
