@@ -197,14 +197,16 @@ func newLogger() *slog.Logger {
 	)
 }
 
-func newServer(port int, handler http.Handler) *http.Server {
-	return &http.Server{
+func newServer(port int, env string, handler http.Handler) *http.Server {
+	s := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      handler,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
-		TLSConfig: &tls.Config{
+	}
+	if env == "development" {
+		tlsCfg := &tls.Config{
 			CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
 			MinVersion:       tls.VersionTLS12,
 			MaxVersion:       tls.VersionTLS13,
@@ -216,8 +218,10 @@ func newServer(port int, handler http.Handler) *http.Server {
 				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 			},
-		},
+		}
+		s.TLSConfig = tlsCfg
 	}
+	return s
 }
 
 func newSessionManager(pool *pgxpool.Pool) *scs.SessionManager {
@@ -302,21 +306,42 @@ func openDB(cfg *config) (*sql.DB, error) {
 }
 
 func (app *application) serve() {
-	srv := newServer(app.config.port, app.routes())
-	app.logger.Info("server started", "env", app.config.env, "address", srv.Addr)
+	srv := newServer(app.config.port, app.config.env, app.routes())
+	app.logger.Info(
+		"server started",
+		"env", app.config.env,
+		"address", srv.Addr,
+	)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 	go func() {
-		if err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem"); err != nil &&
-			err != http.ErrServerClosed {
-
-			app.logger.Error("closing server...", "error", err.Error())
+		switch app.config.env {
+		case "development":
+			if err := srv.ListenAndServeTLS(
+				"./tls/cert.pem",
+				"./tls/key.pem",
+			); err != nil && err != http.ErrServerClosed {
+				app.logger.Error("closing server...", "error", err.Error())
+				os.Exit(exitFailure)
+			}
+		case "staging":
+			fallthrough
+		case "production":
+			if err := srv.ListenAndServe(); err != nil {
+				app.logger.Error("closing server...", "error", err.Error())
+				os.Exit(exitFailure)
+			}
+		default:
+			app.logger.Error("such env type does not exist",
+				"env", app.config.env,
+			)
 			os.Exit(exitFailure)
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
+	// Wait for interrupt signal to gracefully
+	// shutdown the server with a timeout of 10 seconds.
 	<-ctx.Done()
 
 	// Wait for background job to be finished
