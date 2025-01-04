@@ -1,0 +1,16 @@
+services:
+  db:
+    image: arm64v8/postgres:16.3
+    env_file:
+      - ./.env/development/database
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: arm64v8/redis:7.4
+    ports:
+      - "6379:6379"
+volumes:
+  db_data:

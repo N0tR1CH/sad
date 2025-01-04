@@ -66,7 +66,7 @@ type application struct {
 	wg             sync.WaitGroup
 }
 
-func newConfig() *config {
+func newConfig(logger *slog.Logger) *config {
 	cfg := &config{}
 
 	// Port on which server starts
@@ -161,6 +161,11 @@ func newConfig() *config {
 
 	flag.Parse()
 
+	logger.Info(
+		"config values initialized",
+		"smtp-cfg", fmt.Sprintf("%+v", cfg.smtp),
+	)
+
 	return cfg
 }
 
@@ -232,8 +237,8 @@ func newSessionManager(pool *pgxpool.Pool) *scs.SessionManager {
 }
 
 func main() {
-	cfg := newConfig()
 	logger := newLogger()
+	cfg := newConfig(logger)
 
 	// Database connection
 	db, err := openDB(cfg)

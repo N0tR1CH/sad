@@ -32,7 +32,9 @@ window.addEventListener("DOMContentLoaded", async (): Promise<void> => {
     }
   };
 
-  Socket.init();
+  if (window.location.href.startsWith("https://localhost:4000")) {
+    Socket.init();
+  }
 
   // Alpine configuration
   Alpine.data("imageViewer", imageViewer);

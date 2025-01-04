@@ -370,7 +370,10 @@ func (app *application) createUserHandler(c echo.Context) error {
 			mailer.PlainBody(u.ID, t.PlainText),
 			mailer.HtmlBody(u.ID, t.PlainText),
 		); err != nil {
-			app.logger.Info("user#create", "Err", err.Error())
+			app.logger.Error(
+				"user#create while sending email",
+				"Err", err.Error(),
+			)
 		}
 	})
 

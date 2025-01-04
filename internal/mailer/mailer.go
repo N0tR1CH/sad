@@ -21,21 +21,35 @@ func New(
 	username, password, sender string,
 	env string,
 ) Mailer {
-	dialer, err := mail.NewClient(
-		host,
-		mail.WithPort(port),
-		mail.WithUsername(username),
-		mail.WithPassword(password),
-		mail.WithTimeout(5*time.Second),
-	)
-	if err != nil {
-		panic(err)
+	var dialer *mail.Client
+	switch env {
+	case "development":
+		c, err := mail.NewClient(
+			host,
+			mail.WithPort(port),
+			mail.WithUsername(username),
+			mail.WithPassword(password),
+			mail.WithTimeout(5*time.Second),
+			mail.WithTLSPolicy(mail.NoTLS),
+		)
+		if err != nil {
+			panic(err)
+		}
+		dialer = c
+	default:
+		c, err := mail.NewClient(
+			host,
+			mail.WithTLSPortPolicy(mail.TLSMandatory),
+			mail.WithSMTPAuth(mail.SMTPAuthPlain),
+			mail.WithUsername(username),
+			mail.WithPassword(password),
+		)
+		if err != nil {
+			panic(err)
+		}
+		dialer = c
 	}
-	if env == "development" {
-		// No tls in development environment
-		dialer.SetTLSPolicy(mail.NoTLS)
-	}
-	return Mailer{dialer, sender}
+	return Mailer{dialer: dialer, sender: sender}
 }
 
 func (m Mailer) Send(
@@ -57,7 +71,10 @@ func (m Mailer) Send(
 	// Template for subject
 	subject := templ.GetBuffer()
 	defer templ.ReleaseBuffer(subject)
-	if err := subjectTemplate.Render(context.Background(), subject); err != nil {
+	if err := subjectTemplate.Render(
+		context.Background(),
+		subject,
+	); err != nil {
 		return err
 	}
 	msg.Subject(subject.String())
@@ -65,7 +82,10 @@ func (m Mailer) Send(
 	// Template for plain text
 	plainBody := templ.GetBuffer()
 	defer templ.ReleaseBuffer(plainBody)
-	if err := plainBodyTemplate.Render(context.Background(), subject); err != nil {
+	if err := plainBodyTemplate.Render(
+		context.Background(),
+		subject,
+	); err != nil {
 		return err
 	}
 	msg.SetBodyString(mail.TypeTextPlain, plainBody.String())
