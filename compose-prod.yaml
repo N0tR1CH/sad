@@ -19,5 +19,19 @@ services:
     image: redis:7.4
     ports:
       - "6379:6379"
+
+  caddy:
+    image: caddy:2.9-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
 volumes:
   db_data:
+  caddy_data:
+  caddy_config:
