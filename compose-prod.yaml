@@ -1,4 +1,11 @@
 services:
+  web:
+    build: .
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./cmd/web/public:/app/cmd/web/public
+    command: -env=production -smtp-host=${host} -smtp-username=${username} -smtp-password=${password} --db-dsn="postgres://postgres:postgrespwd@db/sad_dev?sslmode=disable"
   db:
     image: arm64v8/postgres:16.3
     env_file:
@@ -9,7 +16,7 @@ services:
       - "5432:5432"
 
   redis:
-    image: arm64v8/redis:7.4
+    image: redis:7.4
     ports:
       - "6379:6379"
 volumes:

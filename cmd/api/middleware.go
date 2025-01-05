@@ -91,9 +91,14 @@ var (
 		}
 	}
 
-	rateLimiterConfig = func() rate_limiter.Config {
+	rateLimiterConfig = func(env string) rate_limiter.Config {
 		client := redis.NewClient(&redis.Options{
-			Addr: "localhost:6379",
+			Addr: func() string {
+				if env == "development" {
+					return "localhost:6379"
+				}
+				return "redis:6379"
+			}(),
 		})
 		ctx := context.Background()
 		_ = client.FlushDB(ctx).Err()
@@ -206,7 +211,7 @@ func (app *application) middleware(e *echo.Echo) {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Secure())
 	e.Use(middleware.CORSWithConfig(corsConfig(app.config)))
-	e.Use(rate_limiter.NewWithConfig(rateLimiterConfig()))
+	e.Use(rate_limiter.NewWithConfig(rateLimiterConfig(app.config.env)))
 	e.Use(middleware.CSRF())
 	e.Use(echo.WrapMiddleware(app.sessionManager.LoadAndSave))
 	e.Use(app.userIdExtraction)

@@ -32,7 +32,7 @@ window.addEventListener("DOMContentLoaded", async (): Promise<void> => {
     }
   };
 
-  if (window.location.href.startsWith("https://localhost:4000")) {
+  if (window.location.href.startsWith("https://localhost")) {
     Socket.init();
   }
 

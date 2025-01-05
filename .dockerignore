@@ -27,6 +27,9 @@ sad-app
 go.work
 tmp/
 
+# Project build
+*templ.go
+
 # IDE specific files
 .vscode
 .idea
@@ -39,3 +42,18 @@ cmd/web/public/*
 
 # Certificate
 tls/*
+
+# Git directory
+.git
+
+# Tailwind config
+tailwind.config.js
+
+# Javascript scripts directory
+scripts
+
+# Fake https certificate
+tls
+
+# Tasks
+Taskfile.yml
