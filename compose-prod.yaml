@@ -5,7 +5,7 @@ services:
       - "4000:4000"
     volumes:
       - ./cmd/web/public:/app/cmd/web/public
-    command: -env=production -smtp-host=${host} -smtp-username=${username} -smtp-password=${password} --db-dsn="postgres://postgres:postgrespwd@db/sad_dev?sslmode=disable"
+    command: -env=production -smtp-host=${host} -smtp-username=${username} -smtp-password=${password} --db-dsn=${DSN_STRING}
   db:
     image: arm64v8/postgres:16.3
     env_file:
