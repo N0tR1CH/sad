@@ -7,7 +7,7 @@ services:
       - ./cmd/web/public:/app/cmd/web/public
     command: -env=production -smtp-host=${host} -smtp-username=${username} -smtp-password=${password} --db-dsn=${DSN_STRING}
   db:
-    image: arm64v8/postgres:16.3
+    image: postgres:16.3
     env_file:
       - ./.env/development/database
     volumes:
