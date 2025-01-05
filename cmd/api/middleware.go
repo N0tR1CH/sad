@@ -66,17 +66,22 @@ var (
 	}
 
 	corsConfig = func(appConfig *config) middleware.CORSConfig {
+		allowOrigins := []string(nil)
+		switch appConfig.env {
+		case "development":
+			allowOrigins = append(
+				allowOrigins,
+				fmt.Sprintf("https://localhost:%d", appConfig.port),
+			)
+		case "production":
+			allowOrigins = append(
+				allowOrigins,
+				"https://damian-richter-soft.works",
+				"https://www.damian-richter-soft.works",
+			)
+		}
 		return middleware.CORSConfig{
-			AllowOrigins: []string{
-				// TODO: Handle cors urls
-				func() string {
-					if appConfig.env == "development" {
-						return fmt.Sprintf("https://localhost:%d", appConfig.port)
-					}
-
-					return fmt.Sprintf("https://localhost:%d", appConfig.port)
-				}(),
-			},
+			AllowOrigins: allowOrigins,
 			AllowHeaders: []string{
 				echo.HeaderOrigin,
 				echo.HeaderContentType,
