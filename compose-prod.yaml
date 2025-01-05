@@ -1,6 +1,11 @@
 services:
   web:
     build: .
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
     ports:
       - "4000:4000"
     volumes:
