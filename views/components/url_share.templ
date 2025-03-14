@@ -41,7 +41,7 @@ templ UrlShareInputField() {
 		name="url"
 		pattern="https://.*"
 		placeholder="https://example.com"
-		class="col-[1_/_7] row-[1_/_2] h-[3rem] rounded-full border-2 border-gray-600 bg-neutral py-2 pl-4 pr-[calc(100%/6*2+1rem)] placeholder-gray-500 outline-none focus:border-gray-500"
+		class="col-[1_/_7] row-[1_/_2] h-[3rem] rounded-full border-2 dark:bg-neutral py-2 pl-4 pr-[calc(100%/6*2+1rem)] dark:placeholder-gray-500 outline-none dark:focus:border-gray-500"
 		_="
             on input
                 if event.target.value matches '(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})' then

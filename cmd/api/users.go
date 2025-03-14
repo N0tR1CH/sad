@@ -238,14 +238,15 @@ func (app *application) createUserHandler(c echo.Context) error {
 			return err
 		}
 		defer func() {
-			err = src.Close()
+			closeErr := src.Close()
+			app.logger.Error("closing file", "error", closeErr.Error())
 		}()
 		fileBytes, err := io.ReadAll(src)
 		if err != nil {
 			return err
 		}
 		webpImgBytes, err := bimg.NewImage(fileBytes).Convert(bimg.WEBP)
-		resPath := fmt.Sprintf("/public/avatars/%s.webp", uuid.NewString())
+		resPath = fmt.Sprintf("/public/avatars/%s.webp", uuid.NewString())
 		filepath := fmt.Sprintf("cmd/web%s", resPath)
 		f, err := os.Create(filepath)
 		if err != nil {
@@ -255,6 +256,8 @@ func (app *application) createUserHandler(c echo.Context) error {
 			_, err = f.Write(webpImgBytes)
 		}()
 	}
+
+	app.logger.Info("avatar!!!", "respath", resPath)
 
 	if err := c.Bind(&input); err != nil {
 		return views.Render(
